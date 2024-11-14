@@ -5,6 +5,7 @@ class OrderForm extends StatefulWidget {
   const OrderForm({Key? key}) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _OrderFormState createState() => _OrderFormState();
 }
 
@@ -45,7 +46,8 @@ class _OrderFormState extends State<OrderForm> {
     try {
       // Find the selected destination from the list
       final selectedDestination = _destinations.firstWhere(
-        (dest) => dest['name'].toLowerCase().contains(destination.toLowerCase()),
+        (dest) =>
+            dest['name'].toLowerCase().contains(destination.toLowerCase()),
         orElse: () => {'name': 'Unknown', 'distance_km': 0.0},
       );
 
@@ -102,7 +104,7 @@ class _OrderFormState extends State<OrderForm> {
             const SizedBox(height: 30),
             _buildTextField('Full Name'),
             const SizedBox(height: 10),
-            _buildTextField('WhatsApp number'),
+            _buildTextField('Phone number'),
             const SizedBox(height: 10),
             _buildTextField('Email Address'),
             const SizedBox(height: 10),
@@ -118,7 +120,8 @@ class _OrderFormState extends State<OrderForm> {
               alignment: Alignment.centerLeft,
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.3,
-                child: _buildTextField('Cost', controller: _costController, readOnly: true),
+                child: _buildTextField('Cost',
+                    controller: _costController, readOnly: true),
               ),
             ),
             const SizedBox(height: 40),
@@ -137,8 +140,10 @@ class _OrderFormState extends State<OrderForm> {
               padding: EdgeInsets.only(bottom: 20.0),
               child: Column(
                 children: [
-                  Text('Powered by PickRide', style: TextStyle(color: Colors.white, fontSize: 16)),
-                  Text('© 2024 PickRide Inc.', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  Text('Powered by PickRide',
+                      style: TextStyle(color: Colors.white, fontSize: 16)),
+                  Text('© 2024 PickRide Inc.',
+                      style: TextStyle(color: Colors.white54, fontSize: 12)),
                 ],
               ),
             ),
@@ -148,7 +153,8 @@ class _OrderFormState extends State<OrderForm> {
     );
   }
 
-  Widget _buildTextField(String hintText, {TextEditingController? controller, bool readOnly = false}) {
+  Widget _buildTextField(String hintText,
+      {TextEditingController? controller, bool readOnly = false}) {
     return TextField(
       controller: controller,
       readOnly: readOnly,
@@ -163,8 +169,29 @@ class _OrderFormState extends State<OrderForm> {
         ),
       ),
       style: const TextStyle(color: Colors.white),
+      onTap: hintText == 'Date'
+          ? () => _selectDate(context)
+          : null, // Open calendar if the field is for date
     );
   }
+
+ Future<void> _selectDate(BuildContext context) async {
+  DateTime? pickedDate = await showDatePicker(
+    context: context,
+    initialDate: DateTime.now(),
+    firstDate: DateTime.now(), // Restrict to today and future dates
+    lastDate: DateTime(2100), // You can modify the upper limit of the date range
+  );
+
+  if (pickedDate != null) {
+    setState(() {
+      // Display the selected date in the text field
+      _destinationController.text = "${pickedDate.toLocal()}"
+          .split(' ')[0]; // Format the date to YYYY-MM-DD
+    });
+  }
+}
+
 
   Widget _buildDestinationField() {
     return TextField(
@@ -189,7 +216,9 @@ class _OrderFormState extends State<OrderForm> {
     return DropdownButtonFormField<String>(
       value: _selectedTime,
       hint: const Text('SELECT TIME', style: TextStyle(color: Colors.grey)),
-      items: times.map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
+      items: times
+          .map((value) => DropdownMenuItem(value: value, child: Text(value)))
+          .toList(),
       onChanged: (newValue) => setState(() => _selectedTime = newValue),
     );
   }
@@ -200,8 +229,14 @@ class _OrderFormState extends State<OrderForm> {
       height: MediaQuery.of(context).size.height * 0.07,
       child: ElevatedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(backgroundColor: color),
-        child: Text(label, style: const TextStyle(fontSize: 18, color: Colors.white)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+        ),
+        child: Text(label,
+            style: const TextStyle(fontSize: 18, color: Colors.white)),
       ),
     );
   }

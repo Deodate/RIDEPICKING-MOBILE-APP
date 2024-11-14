@@ -125,10 +125,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   'Joyce Mutoni',
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
-                Text(
-                  '@2024',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
-                ),
+                Text('© 2024 PickRide Inc.', style: TextStyle(color: Colors.white54, fontSize: 12)),
               ],
             ),
           ),
