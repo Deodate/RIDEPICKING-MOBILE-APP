@@ -1,19 +1,20 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 
 class OrderForm extends StatefulWidget {
   const OrderForm({Key? key}) : super(key: key);
 
   @override
-  // ignore: library_private_types_in_public_api
   _OrderFormState createState() => _OrderFormState();
 }
 
 class _OrderFormState extends State<OrderForm> {
   final TextEditingController _destinationController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
   final TextEditingController _costController = TextEditingController();
+
   double _cost = 0.0;
   String? _selectedTime;
+  String? _selectedCarType;
 
   // Sample destinations with distances
   final List<Map<String, dynamic>> _destinations = [
@@ -21,6 +22,9 @@ class _OrderFormState extends State<OrderForm> {
     {"name": "Kimironko Market", "distance_km": 7.2},
     {"name": "Kigali Convention Center", "distance_km": 4.3},
   ];
+
+  // Car types for dropdown
+  final List<String> _carTypes = ['Sedan', 'SUV', 'Van'];
 
   @override
   void initState() {
@@ -32,6 +36,7 @@ class _OrderFormState extends State<OrderForm> {
   void dispose() {
     _destinationController.removeListener(_onDestinationChanged);
     _destinationController.dispose();
+    _dateController.dispose();
     _costController.dispose();
     super.dispose();
   }
@@ -44,17 +49,14 @@ class _OrderFormState extends State<OrderForm> {
 
   void _calculateCost(String destination) {
     try {
-      // Find the selected destination from the list
       final selectedDestination = _destinations.firstWhere(
-        (dest) =>
-            dest['name'].toLowerCase().contains(destination.toLowerCase()),
+        (dest) => dest['name'].toLowerCase().contains(destination.toLowerCase()),
         orElse: () => {'name': 'Unknown', 'distance_km': 0.0},
       );
 
       final distance = selectedDestination['distance_km'];
-
-      // Cost calculation: 500 RWF per kilometer
       final cost = distance * 500;
+
       setState(() {
         _cost = cost;
         _costController.text = '${_cost.toStringAsFixed(2)} RWF';
@@ -84,6 +86,21 @@ class _OrderFormState extends State<OrderForm> {
     );
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        _dateController.text = "${pickedDate.toLocal()}".split(' ')[0];
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,20 +127,13 @@ class _OrderFormState extends State<OrderForm> {
             const SizedBox(height: 10),
             _buildDropdownTimePicker(),
             const SizedBox(height: 10),
-            _buildTextField('Date'),
+            _buildDateField(),
             const SizedBox(height: 10),
             _buildDestinationField(),
             const SizedBox(height: 10),
-            _buildTextField('Passenger'),
+            _buildCarTypeDropdown(),
             const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.3,
-                child: _buildTextField('Cost',
-                    controller: _costController, readOnly: true),
-              ),
-            ),
+            _buildTextField('Cost', controller: _costController, readOnly: true),
             const SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -169,29 +179,42 @@ class _OrderFormState extends State<OrderForm> {
         ),
       ),
       style: const TextStyle(color: Colors.white),
-      onTap: hintText == 'Date'
-          ? () => _selectDate(context)
-          : null, // Open calendar if the field is for date
     );
   }
 
- Future<void> _selectDate(BuildContext context) async {
-  DateTime? pickedDate = await showDatePicker(
-    context: context,
-    initialDate: DateTime.now(),
-    firstDate: DateTime.now(), // Restrict to today and future dates
-    lastDate: DateTime(2100), // You can modify the upper limit of the date range
-  );
-
-  if (pickedDate != null) {
-    setState(() {
-      // Display the selected date in the text field
-      _destinationController.text = "${pickedDate.toLocal()}"
-          .split(' ')[0]; // Format the date to YYYY-MM-DD
-    });
+  Widget _buildDateField() {
+    return TextField(
+      controller: _dateController,
+      readOnly: true,
+      decoration: const InputDecoration(
+        hintText: 'Select Date',
+        hintStyle: TextStyle(color: Colors.white),
+      ),
+      style: const TextStyle(color: Colors.white),
+      onTap: () => _selectDate(context),
+    );
   }
-}
 
+  Widget _buildCarTypeDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedCarType,
+      hint: const Text('Select Car Type', style: TextStyle(color: Colors.grey)),
+      items: _carTypes
+          .map((carType) => DropdownMenuItem(
+                value: carType,
+                child: Text(carType),
+              ))
+          .toList(),
+      onChanged: (newValue) {
+        setState(() {
+          _selectedCarType = newValue;
+        });
+      },
+      decoration: const InputDecoration(),
+      dropdownColor: Colors.blueGrey[900],
+      style: const TextStyle(color: Colors.white),
+    );
+  }
 
   Widget _buildDestinationField() {
     return TextField(
@@ -226,17 +249,11 @@ class _OrderFormState extends State<OrderForm> {
   Widget _buildButton(String label, Color color, VoidCallback onPressed) {
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.3,
-      height: MediaQuery.of(context).size.height * 0.07,
+      height: 50,
       child: ElevatedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.zero,
-          ),
-        ),
-        child: Text(label,
-            style: const TextStyle(fontSize: 18, color: Colors.white)),
+        style: ElevatedButton.styleFrom(backgroundColor: color),
+        child: Text(label, style: const TextStyle(fontSize: 18, color: Colors.white)),
       ),
     );
   }
