@@ -24,7 +24,10 @@ class _OrderFormState extends State<OrderForm> {
   ];
 
   // Car types for dropdown
-  final List<String> _carTypes = ['Sedan', 'SUV', 'Van'];
+  final List<String> _carTypes = [
+    'PICNIC',
+    'VOITURE',
+  ];
 
   @override
   void initState() {
@@ -50,7 +53,8 @@ class _OrderFormState extends State<OrderForm> {
   void _calculateCost(String destination) {
     try {
       final selectedDestination = _destinations.firstWhere(
-        (dest) => dest['name'].toLowerCase().contains(destination.toLowerCase()),
+        (dest) =>
+            dest['name'].toLowerCase().contains(destination.toLowerCase()),
         orElse: () => {'name': 'Unknown', 'distance_km': 0.0},
       );
 
@@ -133,7 +137,8 @@ class _OrderFormState extends State<OrderForm> {
             const SizedBox(height: 10),
             _buildCarTypeDropdown(),
             const SizedBox(height: 10),
-            _buildTextField('Cost', controller: _costController, readOnly: true),
+            _buildTextField('Cost',
+                controller: _costController, readOnly: true),
             const SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -147,7 +152,7 @@ class _OrderFormState extends State<OrderForm> {
             ),
             const SizedBox(height: 33),
             const Padding(
-              padding: EdgeInsets.only(bottom: 20.0),
+              padding: EdgeInsets.only(bottom: 2.0),
               child: Column(
                 children: [
                   Text('Powered by PickRide',
@@ -252,8 +257,14 @@ class _OrderFormState extends State<OrderForm> {
       height: 50,
       child: ElevatedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(backgroundColor: color),
-        child: Text(label, style: const TextStyle(fontSize: 18, color: Colors.white)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          shape: const RoundedRectangleBorder(), // Removed border radius
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 18, color: Colors.white),
+        ),
       ),
     );
   }
