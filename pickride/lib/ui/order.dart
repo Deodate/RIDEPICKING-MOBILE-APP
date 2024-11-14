@@ -201,7 +201,9 @@ class _OrderFormState extends State<OrderForm> {
   }
 
   Widget _buildCarTypeDropdown() {
-    return DropdownButtonFormField<String>(
+  return SizedBox(
+    width: MediaQuery.of(context).size.width * 0.3, // 30% of the screen width
+    child: DropdownButtonFormField<String>(
       value: _selectedCarType,
       hint: const Text('Select Car Type', style: TextStyle(color: Colors.grey)),
       items: _carTypes
@@ -218,8 +220,10 @@ class _OrderFormState extends State<OrderForm> {
       decoration: const InputDecoration(),
       dropdownColor: Colors.blueGrey[900],
       style: const TextStyle(color: Colors.white),
-    );
-  }
+    ),
+  );
+}
+
 
   Widget _buildDestinationField() {
     return TextField(
@@ -254,7 +258,7 @@ class _OrderFormState extends State<OrderForm> {
   Widget _buildButton(String label, Color color, VoidCallback onPressed) {
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.3,
-      height: 50,
+      height: 30,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -263,7 +267,7 @@ class _OrderFormState extends State<OrderForm> {
         ),
         child: Text(
           label,
-          style: const TextStyle(fontSize: 18, color: Colors.white),
+          style: const TextStyle(fontSize: 13, color: Colors.white),
         ),
       ),
     );
