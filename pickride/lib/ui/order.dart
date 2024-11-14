@@ -21,6 +21,7 @@ class _OrderFormState extends State<OrderForm> {
     {"name": "Kigali Genocide Memorial", "distance_km": 5.0},
     {"name": "Kimironko Market", "distance_km": 7.2},
     {"name": "Kigali Convention Center", "distance_km": 4.3},
+     {"name": "Remera", "distance_km": 2.0},
   ];
 
   // Car types for dropdown
@@ -113,7 +114,7 @@ class _OrderFormState extends State<OrderForm> {
         backgroundColor: const Color(0xFF0A395D),
         elevation: 0,
         title: const Text(
-          'BOOK A RIDE',
+          'Book a Ride',
           style: TextStyle(color: Colors.white),
         ),
       ),
@@ -122,7 +123,7 @@ class _OrderFormState extends State<OrderForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 30),
+           
             _buildTextField('Full Name'),
             const SizedBox(height: 10),
             _buildTextField('Phone number'),
@@ -139,23 +140,23 @@ class _OrderFormState extends State<OrderForm> {
             const SizedBox(height: 10),
             _buildTextField('Cost',
                 controller: _costController, readOnly: true),
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _buildButton('Order Now', Colors.green, () {}),
+                _buildButton('Submit', Colors.green, () {}),
                 const SizedBox(width: 6),
                 _buildButton('Cancel', Colors.red, () {
                   Navigator.pop(context);
                 }),
               ],
             ),
-            const SizedBox(height: 33),
+            const SizedBox(height: 20),
             const Padding(
               padding: EdgeInsets.only(bottom: 2.0),
               child: Column(
                 children: [
-                  Text('Powered by PickRide',
+                  Text('Joyce Mutoni',
                       style: TextStyle(color: Colors.white, fontSize: 16)),
                   Text('© 2024 PickRide Inc.',
                       style: TextStyle(color: Colors.white54, fontSize: 12)),
@@ -199,32 +200,6 @@ class _OrderFormState extends State<OrderForm> {
       onTap: () => _selectDate(context),
     );
   }
-
-  Widget _buildCarTypeDropdown() {
-  return SizedBox(
-    width: MediaQuery.of(context).size.width * 0.3, // 30% of the screen width
-    child: DropdownButtonFormField<String>(
-      value: _selectedCarType,
-      hint: const Text('Select Car Type', style: TextStyle(color: Colors.grey)),
-      items: _carTypes
-          .map((carType) => DropdownMenuItem(
-                value: carType,
-                child: Text(carType),
-              ))
-          .toList(),
-      onChanged: (newValue) {
-        setState(() {
-          _selectedCarType = newValue;
-        });
-      },
-      decoration: const InputDecoration(),
-      dropdownColor: Colors.blueGrey[900],
-      style: const TextStyle(color: Colors.white),
-    ),
-  );
-}
-
-
   Widget _buildDestinationField() {
     return TextField(
       controller: _destinationController,
@@ -235,6 +210,42 @@ class _OrderFormState extends State<OrderForm> {
       style: const TextStyle(color: Colors.white),
     );
   }
+
+ Widget _buildCarTypeDropdown() {
+  return Align(
+    alignment: Alignment.centerLeft,
+    child: Flexible(
+      child: SizedBox(
+       
+        child: DropdownButtonFormField<String>(
+          value: _selectedCarType,
+          hint: const Text(
+            'Select Car Type',
+            style: TextStyle(color: Colors.grey),
+          ),
+          items: _carTypes
+              .map((carType) => DropdownMenuItem(
+                    value: carType,
+                    child: Text(carType),
+                  ))
+              .toList(),
+          onChanged: (newValue) {
+            setState(() {
+              _selectedCarType = newValue;
+            });
+          },
+          decoration: const InputDecoration(
+            isDense: true, // Add this line to reduce vertical padding
+            contentPadding: EdgeInsets.all(8), // Adjust padding if needed
+          ),
+          dropdownColor: Colors.blueGrey[900],
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+    ),
+  );
+}
+
 
   Widget _buildDropdownTimePicker() {
     List<String> times = List.generate(48, (index) {
