@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/auth/CarsListScreen.dart';
+import 'package:pickride/auth/CreateUserAccount.dart';
 import 'package:pickride/auth/UserListScreen.dart';
 import 'package:pickride/auth/addCar.dart';
+import 'package:pickride/auth/booking.dart';
 
 void main() => runApp(AdminPage());
 
@@ -147,15 +150,18 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AddCarScreen()),
+                MaterialPageRoute(builder: (context) => BookingListScreen()),
               );
             },
           ),
           ListTile(
             leading: Icon(Icons.car_rental, color: Colors.blue),
             title: const Text('List of Car'),
-            onTap: () {
-              Navigator.pop(context);
+           onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CarsListScreen()),
+              );
             },
           ),
           ListTile(
@@ -172,7 +178,10 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.person_add, color: Colors.blue),
             title: const Text('Register User'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CreateUserAccountScreen()),
+              );
             },
           ),
           ListTile(
