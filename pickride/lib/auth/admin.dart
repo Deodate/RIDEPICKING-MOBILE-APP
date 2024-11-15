@@ -157,7 +157,7 @@ class AppDrawer extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.car_rental, color: Colors.blue),
             title: const Text('List of Car'),
-           onTap: () {
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => CarsListScreen()),
@@ -180,7 +180,8 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreateUserAccountScreen()),
+                MaterialPageRoute(
+                    builder: (context) => CreateUserAccountScreen()),
               );
             },
           ),
@@ -194,6 +195,16 @@ class AppDrawer extends StatelessWidget {
               );
             },
           ),
+          ListTile(
+            leading: Icon(Icons.exit_to_app, color: Colors.blue),
+            title: const Text('Logout'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UserListScreen()),
+              );
+            },
+          )
         ],
       ),
     );
