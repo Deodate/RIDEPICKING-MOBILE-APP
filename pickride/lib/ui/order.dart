@@ -220,7 +220,7 @@ class _OrderFormState extends State<OrderForm> {
         child: DropdownButtonFormField<String>(
           value: _selectedCarType,
           hint: const Text(
-            'Select Car Type',
+            'SELECT CAR TYPE',
             style: TextStyle(color: Colors.grey),
           ),
           items: _carTypes
