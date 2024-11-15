@@ -33,6 +33,7 @@ class AdminDashboard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center, // Centers the row content
                 children: [
                   // Menu Icon Button
                   Builder(
@@ -44,55 +45,60 @@ class AdminDashboard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
-                    'Admin Dashboard',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  Expanded( // This allows the text to center
+                    child: const Text(
+                      'Admin Dashboard',
+                      textAlign: TextAlign.center, // Ensures the text is centered within the Expanded widget
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const Spacer(),
+              const SizedBox(height: 30),
             const Icon(
               Icons.check_circle,
-              size: 100,
+              size: 70,
               color: Colors.white,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 90),
             const Text(
-              'Welcome',
+              'Welcome!',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 20), // Adjust spacing here
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
-                      vertical: 15.0, horizontal: 50.0),
-                  backgroundColor: Colors.white,
+                      vertical: 15.0, horizontal: 40.0),
+                  backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.0),
+                    borderRadius: BorderRadius.circular(0.0),
                   ),
                 ),
                 child: const Text(
-                  'Get Started',
+                  'Booked Car',
                   style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: 18,
+                    color: Colors
+                        .black, // Set text color to white for better contrast
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
+            const Spacer(), // Optional: Adjust based on remaining space
             const Text(
               'Joyce Mutoni\n©2024',
               textAlign: TextAlign.center,
@@ -117,10 +123,11 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.blue,
-            ),
+          Container(
+            height: 100, // Set the height to 30px
+            color: Colors.blue,
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: const Text(
               'Menu',
               style: TextStyle(
