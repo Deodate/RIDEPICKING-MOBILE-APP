@@ -49,62 +49,77 @@ class _UserListScreenState extends State<UserListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF0A395D), // Dark blue background
         title: const Text(
-          'Ride Admin',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'LIST OF USERS',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // White text color
+          ),
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,
+              color: Colors.white), // White icon color
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: 1),
             const Center(
               child: Text(
-                'List Of Users',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                '',
               ),
             ),
-            const SizedBox(height: 20),
-            // Search Input
-            TextField(
-              onChanged: _filterUsers,
-              decoration: InputDecoration(
-                labelText: 'Search',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+            const SizedBox(height: 10),
+            // Search Input positioned on the right side with specific dimensions
+            Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                width: 170, // Set width to 150px
+                height: 40, // Set height to 40px
+                child: TextField(
+                  onChanged: _filterUsers,
+                  decoration: InputDecoration(
+                    labelText: 'Search',
+                    prefixIcon: Icon(Icons.search),
+                    // Set border when not focused
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide(
+                          color: Colors
+                              .blue), // Blue border color when not focused
+                    ),
+                    // Set border when focused
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide(
+                          color: Colors.blue), // Blue border color when focused
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                        vertical: 2, horizontal: 5), // Adjust padding
+                  ),
+                  style: TextStyle(
+                      fontSize: 12), // Set font size for search input text
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
             // Paginated Table
             PaginatedDataTable(
-              header: const Text(
-                'User List',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              columns: [
-                DataColumn(label: Text('No')),
+              columns: const [
+                DataColumn(label: Text('#')),
                 DataColumn(label: Text('Name')),
                 DataColumn(label: Text('Username')),
                 DataColumn(label: Text('Email')),
                 DataColumn(label: Text('Action')),
               ],
               source: UserDataTableSource(_filteredUsers, _currentPage),
-              rowsPerPage: 10,
+              rowsPerPage: 5, // Display 5 rows per page
               onPageChanged: (pageIndex) {
                 setState(() {
                   _currentPage = pageIndex;
@@ -112,16 +127,25 @@ class _UserListScreenState extends State<UserListScreen> {
               },
               showCheckboxColumn: false,
               columnSpacing: 20,
+              headingRowColor: MaterialStateProperty.all(
+                  Colors.blue), // Set header background to blue
             ),
             const SizedBox(height: 20),
             Center(
               child: Text('Page: ${_currentPage + 1}'),
             ),
             const SizedBox(height: 20),
-            const Center(
-              child: Text(
-                'Joyce Mutoni @2024',
-                style: TextStyle(fontWeight: FontWeight.bold),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 20.0),
+              child: Column(
+                children: [
+                  Text(
+                    'Joyce Mutoni',
+                    style: TextStyle(color: Colors.black, fontSize: 16),
+                  ),
+                  Text('© 2024 PickRide Inc.',
+                      style: TextStyle(color: Colors.black, fontSize: 12)),
+                ],
               ),
             ),
           ],
