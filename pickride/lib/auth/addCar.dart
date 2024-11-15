@@ -121,7 +121,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
             // Plack Input
             TextFormField(
               decoration: const InputDecoration(
-                labelText: 'Plack',
+                labelText: 'Plate',
                 labelStyle: TextStyle(
                     fontFamily: 'Times New Roman', color: Colors.white),
                 hintStyle:
@@ -139,7 +139,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   color: Colors.white), // White text in input field
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a plack';
+                  return 'Please enter a plate';
                 }
                 return null;
               },
@@ -166,7 +166,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                       // Handle form submission
                       print('Car Name: $_carName');
                       print('Car Type: $_carType');
-                      print('Plack: $_plack');
+                      print('Plate: $_plack');
                       // Perform any submission logic here
                     }
                   },

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/auth/UserListScreen.dart';
 import 'package:pickride/auth/addCar.dart';
 
 void main() => runApp(AdminPage());
@@ -34,7 +35,8 @@ class AdminDashboard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center, // Centers the row content
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Centers the row content
                 children: [
                   // Menu Icon Button
                   Builder(
@@ -46,10 +48,12 @@ class AdminDashboard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded( // This allows the text to center
+                  const Expanded(
+                    // This allows the text to center
                     child: Text(
                       'Admin Dashboard',
-                      textAlign: TextAlign.center, // Ensures the text is centered within the Expanded widget
+                      textAlign: TextAlign
+                          .center, // Ensures the text is centered within the Expanded widget
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -60,7 +64,7 @@ class AdminDashboard extends StatelessWidget {
                 ],
               ),
             ),
-              const SizedBox(height: 30),
+            const SizedBox(height: 30),
             const Icon(
               Icons.check_circle,
               size: 70,
@@ -141,10 +145,10 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.book_online, color: Colors.blue),
             title: const Text('Booking'),
             onTap: () {
-               Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AddCarScreen()),
-                  );
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddCarScreen()),
+              );
             },
           ),
           ListTile(
@@ -158,7 +162,10 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.add_box, color: Colors.blue),
             title: const Text('Add Car'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddCarScreen()),
+              );
             },
           ),
           ListTile(
@@ -172,7 +179,10 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.people, color: Colors.blue),
             title: const Text('List of User'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UserListScreen()),
+              );
             },
           ),
         ],
