@@ -26,4 +26,6 @@ This is flutter mobile application
 [6]. 
 ![image](https://github.com/user-attachments/assets/cc666d0d-74fa-4270-a348-ea9974b40c91)
 
+[7]. ADMIN REGISTER USER
+![image](https://github.com/user-attachments/assets/77a0dea9-cd96-46be-a878-8a728e5a8063)
 
