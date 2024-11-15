@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pickride/ui/login.dart';
 import 'package:pickride/ui/signupForm.dart';
 import 'package:pickride/ui/order.dart';
+import 'package:pickride/auth/admin.dart';
+
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -72,7 +74,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   // Navigate to the SignUp page
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginForm()),
+                    MaterialPageRoute(builder: (context) => AdminPage()),
                   );
                 },
               ),
