@@ -10,7 +10,9 @@ This is flutter mobile application
 ![image](https://github.com/user-attachments/assets/46d76f5b-13f9-4f0c-81cf-65d904e4d893)
 
 [3]. ADMIN MENU
-![image](https://github.com/user-attachments/assets/5879e2d9-4a94-4ea0-9854-01ba0398ac74)
+
+![image](https://github.com/user-attachments/assets/49e171f6-8746-449b-91ef-a174a717c64f)
+
 
 [4] LIST OF BOOKING
 
