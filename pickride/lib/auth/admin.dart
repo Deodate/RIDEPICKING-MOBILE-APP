@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/auth/addCar.dart';
 
 void main() => runApp(AdminPage());
 
@@ -45,8 +46,8 @@ class AdminDashboard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Expanded( // This allows the text to center
-                    child: const Text(
+                  const Expanded( // This allows the text to center
+                    child: Text(
                       'Admin Dashboard',
                       textAlign: TextAlign.center, // Ensures the text is centered within the Expanded widget
                       style: TextStyle(
@@ -140,7 +141,10 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.book_online, color: Colors.blue),
             title: const Text('Booking'),
             onTap: () {
-              Navigator.pop(context);
+               Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddCarScreen()),
+                  );
             },
           ),
           ListTile(
