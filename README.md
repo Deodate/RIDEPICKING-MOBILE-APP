@@ -1,5 +1,9 @@
 # RIDEPICKING-MOBILE-APP
 This is flutter mobile application
+[0]. FORM VALIDATION (Validate the form, Save to Supabase, Show loading states, Display success/error messages, Reset the form after successful submission)
+
+![image](https://github.com/user-attachments/assets/d4b9fd75-12d5-4a87-82cc-9b890072d307)
+
 
 [1] ADMIN DASHBOARD
 
