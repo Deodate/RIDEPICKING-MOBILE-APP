@@ -38,10 +38,8 @@ class AdminDashboard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center, // Centers the row content
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Menu Icon Button
                   Builder(
                     builder: (context) => IconButton(
                       icon: const Icon(Icons.menu, color: Colors.white),
@@ -52,11 +50,9 @@ class AdminDashboard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   const Expanded(
-                    // This allows the text to center
                     child: Text(
                       'Admin Dashboard',
-                      textAlign: TextAlign
-                          .center, // Ensures the text is centered within the Expanded widget
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -82,14 +78,19 @@ class AdminDashboard extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-            const SizedBox(height: 20), // Adjust spacing here
+            const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // Navigate to the BookedCarPage when clicked
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => BookingListScreen()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 15.0, horizontal: 40.0),
+                  padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 40.0),
                   backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(0.0),
@@ -98,15 +99,14 @@ class AdminDashboard extends StatelessWidget {
                 child: const Text(
                   'Booked Car',
                   style: TextStyle(
-                    color: Colors
-                        .black, // Set text color to white for better contrast
+                    color: Colors.black,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            const Spacer(), // Optional: Adjust based on remaining space
+            const Spacer(),
             const Text(
               'Joyce Mutoni\n©2024',
               textAlign: TextAlign.center,
@@ -123,7 +123,6 @@ class AdminDashboard extends StatelessWidget {
   }
 }
 
-// Drawer Widget for the Menu
 class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -132,7 +131,7 @@ class AppDrawer extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: <Widget>[
           Container(
-            height: 100, // Set the height to 30px
+            height: 100,
             color: Colors.blue,
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -180,8 +179,7 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => CreateUserAccountScreen()),
+                MaterialPageRoute(builder: (context) => CreateUserAccountScreen()),
               );
             },
           ),
@@ -195,16 +193,6 @@ class AppDrawer extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            leading: Icon(Icons.exit_to_app, color: Colors.blue),
-            title: const Text('Logout'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UserListScreen()),
-              );
-            },
-          )
         ],
       ),
     );

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 class Booking {
-  final String bookingId;
-  final String customerName;
-  final String service;
-  final String date;
-  final String status;
+  String bookingId;
+  String customerName;
+  String service;
+  String date;
+  String status;
 
   Booking({
     required this.bookingId,
@@ -14,6 +14,17 @@ class Booking {
     required this.date,
     required this.status,
   });
+
+  // Method to cycle through statuses
+  void toggleStatus() {
+    if (status == 'Pending') {
+      status = 'Confirmed';
+    } else if (status == 'Confirmed') {
+      status = 'Canceled';
+    } else {
+      status = 'Pending';
+    }
+  }
 }
 
 class BookingListScreen extends StatefulWidget {
@@ -23,13 +34,13 @@ class BookingListScreen extends StatefulWidget {
 
 class _BookingListScreenState extends State<BookingListScreen> {
   List<Booking> _bookings = List.generate(
-    50,
+    10,
     (index) => Booking(
       bookingId: 'BK${index + 1001}',
       customerName: 'Customer $index',
       service: 'Service ${index % 5 + 1}',
       date: '2024-11-${(index % 30) + 1}',
-      status: index % 2 == 0 ? 'Confirmed' : 'Pending',
+      status: 'Pending', // Default status is set to 'Pending'
     ),
   );
 
@@ -55,6 +66,32 @@ class _BookingListScreenState extends State<BookingListScreen> {
               booking.status.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
+  }
+
+  void _showSnackBar(BuildContext context, String message, String status) {
+    Color getBackgroundColor(String status) {
+      switch (status.toLowerCase()) {
+        case 'confirmed':
+          return Colors.green;
+        case 'canceled':
+          return Colors.red;
+        case 'pending':
+          return Colors.blue;
+        default:
+          return Colors.grey;
+      }
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: getBackgroundColor(status),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -89,18 +126,19 @@ class _BookingListScreenState extends State<BookingListScreen> {
                   onChanged: _filterBookings,
                   decoration: InputDecoration(
                     labelText: 'Search',
-                    prefixIcon: Icon(Icons.search),
+                    prefixIcon: const Icon(Icons.search),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(color: Colors.blue),
+                      borderSide: const BorderSide(color: Colors.blue),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(color: Colors.blue),
+                      borderSide: const BorderSide(color: Colors.blue),
                     ),
-                    contentPadding: EdgeInsets.symmetric(vertical: 2, horizontal: 5),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 2, horizontal: 5),
                   ),
-                  style: TextStyle(fontSize: 12),
+                  style: const TextStyle(fontSize: 12),
                 ),
               ),
             ),
@@ -113,9 +151,9 @@ class _BookingListScreenState extends State<BookingListScreen> {
                 DataColumn(label: Text('Service')),
                 DataColumn(label: Text('Date')),
                 DataColumn(label: Text('Status')),
-                DataColumn(label: Text('Action')),
               ],
-              source: BookingDataTableSource(_filteredBookings, _currentPage),
+              source: BookingDataTableSource(
+                  _filteredBookings, _updateStatus, _showSnackBar, context),
               rowsPerPage: 5,
               onPageChanged: (pageIndex) {
                 setState(() {
@@ -130,60 +168,73 @@ class _BookingListScreenState extends State<BookingListScreen> {
             Center(
               child: Text('Page: ${_currentPage + 1}'),
             ),
-            const SizedBox(height: 20),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 20.0),
-              child: Column(
-                children: [
-                  Text(
-                    'Joyce Mutoni',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                  Text('© 2024 PickRide Inc.',
-                      style: TextStyle(color: Colors.black, fontSize: 12)),
-                ],
-              ),
-            ),
           ],
         ),
       ),
     );
   }
+
+  // Method to update status
+  void _updateStatus(int index) {
+    setState(() {
+      _filteredBookings[index].toggleStatus();
+    });
+  }
 }
 
 class BookingDataTableSource extends DataTableSource {
   final List<Booking> bookings;
-  final int currentPage;
+  final Function(int) updateStatus;
+  final Function(BuildContext, String, String) showSnackBar;
+  final BuildContext context;
 
-  BookingDataTableSource(this.bookings, this.currentPage);
+  BookingDataTableSource(
+      this.bookings, this.updateStatus, this.showSnackBar, this.context);
 
   @override
-  DataRow getRow(int index) {
-    if (index >= bookings.length) return null as DataRow;
+  DataRow? getRow(int index) {
+    if (index >= bookings.length) return null;
     final booking = bookings[index];
+
+    // Determine button color based on status
+    Color getStatusColor(String status) {
+      switch (status.toLowerCase()) {
+        case 'confirmed':
+          return Colors.green;
+        case 'canceled':
+          return Colors.red;
+        case 'pending':
+          return Colors.blue;
+        default:
+          return Colors.grey;
+      }
+    }
+
     return DataRow(cells: [
       DataCell(Text('${index + 1}')),
       DataCell(Text(booking.bookingId)),
       DataCell(Text(booking.customerName)),
       DataCell(Text(booking.service)),
       DataCell(Text(booking.date)),
-      DataCell(Text(booking.status)),
-      DataCell(Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () {
-              // Handle delete action
-            },
+      DataCell(
+        GestureDetector(
+          onTap: () {
+            updateStatus(index);
+            showSnackBar(context, 'Status changed to: ${bookings[index].status}', bookings[index].status);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            decoration: BoxDecoration(
+              color: getStatusColor(booking.status),
+              borderRadius: BorderRadius.circular(5.0),
+            ),
+            child: Text(
+              booking.status,
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.blue),
-            onPressed: () {
-              // Handle edit action
-            },
-          ),
-        ],
-      )),
+        ),
+      ),
     ]);
   }
 
