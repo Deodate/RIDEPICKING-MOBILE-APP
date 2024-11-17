@@ -1,21 +1,32 @@
 import 'package:flutter/material.dart';
 
+void main() => runApp(MaterialApp(
+      home: BookingListScreen(),
+    ));
+
 class Booking {
-  String bookingId;
-  String customerName;
-  String service;
+  String id;
+  String fullName;
+  String phoneNumber;
+  String email;
   String date;
+  String time;
+  String destination;
+  String cost;
   String status;
 
   Booking({
-    required this.bookingId,
-    required this.customerName,
-    required this.service,
+    required this.id,
+    required this.fullName,
+    required this.phoneNumber,
+    required this.email,
     required this.date,
+    required this.time,
+    required this.destination,
+    required this.cost,
     required this.status,
   });
 
-  // Method to cycle through statuses
   void toggleStatus() {
     if (status == 'Pending') {
       status = 'Confirmed';
@@ -36,11 +47,15 @@ class _BookingListScreenState extends State<BookingListScreen> {
   List<Booking> _bookings = List.generate(
     10,
     (index) => Booking(
-      bookingId: 'BK${index + 1001}',
-      customerName: 'Customer $index',
-      service: 'Service ${index % 5 + 1}',
+      id: 'BK${index + 1001}',
+      fullName: 'Customer $index',
+      phoneNumber: '123456789$index',
+      email: 'customer$index@example.com',
       date: '2024-11-${(index % 30) + 1}',
-      status: 'Pending', // Default status is set to 'Pending'
+      time: '10:${(index % 60).toString().padLeft(2, '0')} AM',
+      destination: 'Destination ${index % 5 + 1}',
+      cost: '\FRW ${(index + 10) * 10}',
+      status: 'Pending',
     ),
   );
 
@@ -59,37 +74,38 @@ class _BookingListScreenState extends State<BookingListScreen> {
       _searchQuery = query;
       _filteredBookings = _bookings
           .where((booking) =>
-              booking.bookingId.toLowerCase().contains(query.toLowerCase()) ||
-              booking.customerName.toLowerCase().contains(query.toLowerCase()) ||
-              booking.service.toLowerCase().contains(query.toLowerCase()) ||
-              booking.date.toLowerCase().contains(query.toLowerCase()) ||
-              booking.status.toLowerCase().contains(query.toLowerCase()))
+              booking.id.toLowerCase().contains(query.toLowerCase()) ||
+              booking.fullName.toLowerCase().contains(query.toLowerCase()) ||
+              booking.destination.toLowerCase().contains(query.toLowerCase()) ||
+              booking.date.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
 
-  void _showSnackBar(BuildContext context, String message, String status) {
-    Color getBackgroundColor(String status) {
-      switch (status.toLowerCase()) {
-        case 'confirmed':
-          return Colors.green;
-        case 'canceled':
-          return Colors.red;
-        case 'pending':
-          return Colors.blue;
-        default:
-          return Colors.grey;
-      }
+  void _updateStatus(int index) {
+    setState(() {
+      _filteredBookings[index].toggleStatus();
+    });
+
+    // Show a SnackBar with different colors based on the status
+    final booking = _filteredBookings[index];
+    Color bgColor;
+
+    if (booking.status == 'Confirmed') {
+      bgColor = Colors.green;
+    } else if (booking.status == 'Canceled') {
+      bgColor = Colors.red;
+    } else {
+      bgColor = Colors.blue;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: getBackgroundColor(status),
+        content: Text('Booking ${booking.id} is now ${booking.status}!'),
+        backgroundColor: bgColor,
         duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(10),
       ),
     );
   }
@@ -107,20 +123,16 @@ class _BookingListScreenState extends State<BookingListScreen> {
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ListView(
+        child: Column(
           children: [
             const SizedBox(height: 10),
             Align(
               alignment: Alignment.centerRight,
-              child: Container(
-                width: 170,
+              child: SizedBox(
+                width: 200,
                 height: 40,
                 child: TextField(
                   onChanged: _filterBookings,
@@ -143,89 +155,113 @@ class _BookingListScreenState extends State<BookingListScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            PaginatedDataTable(
-              columns: const [
-                DataColumn(label: Text('#')),
-                DataColumn(label: Text('Booking ID')),
-                DataColumn(label: Text('Customer Name')),
-                DataColumn(label: Text('Service')),
-                DataColumn(label: Text('Date')),
-                DataColumn(label: Text('Status')),
-              ],
-              source: BookingDataTableSource(
-                  _filteredBookings, _updateStatus, _showSnackBar, context),
-              rowsPerPage: 5,
-              onPageChanged: (pageIndex) {
-                setState(() {
-                  _currentPage = pageIndex;
-                });
-              },
-              showCheckboxColumn: false,
-              columnSpacing: 20,
-              headingRowColor: MaterialStateProperty.all(Colors.blue),
+            Expanded(
+              child: SingleChildScrollView(
+                child: PaginatedDataTable(
+                  headingRowColor: MaterialStateColor.resolveWith(
+                      (states) => Color(0xFFe2e3e5)),
+                  columns: const [
+                    DataColumn(
+                        label: Text('#',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Names',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Phone',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Email',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Date',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Time',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Destination',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Cost',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Status',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                  ],
+                  source: BookingDataTableSource(
+                    _filteredBookings,
+                    _updateStatus,
+                  ),
+                  rowsPerPage: 5,
+                  showCheckboxColumn: false,
+                  columnSpacing: 10,
+                  horizontalMargin: 3,
+                  checkboxHorizontalMargin: 3,
+                  header: Container(
+                    color: Colors.blue,
+                    padding: const EdgeInsets.all(8.0),
+                    child: const Text(
+                      'BOOKINGS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 20),
-            Center(
-              child: Text('Page: ${_currentPage + 1}'),
+            // Page Indicator
+
+            const Text(
+              'Joyce Mutoni\n©2024',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Color.fromARGB(179, 247, 5, 5),
+              ),
             ),
           ],
         ),
       ),
     );
   }
-
-  // Method to update status
-  void _updateStatus(int index) {
-    setState(() {
-      _filteredBookings[index].toggleStatus();
-    });
-  }
 }
 
 class BookingDataTableSource extends DataTableSource {
   final List<Booking> bookings;
   final Function(int) updateStatus;
-  final Function(BuildContext, String, String) showSnackBar;
-  final BuildContext context;
 
-  BookingDataTableSource(
-      this.bookings, this.updateStatus, this.showSnackBar, this.context);
+  BookingDataTableSource(this.bookings, this.updateStatus);
 
   @override
   DataRow? getRow(int index) {
     if (index >= bookings.length) return null;
     final booking = bookings[index];
 
-    // Determine button color based on status
-    Color getStatusColor(String status) {
-      switch (status.toLowerCase()) {
-        case 'confirmed':
-          return Colors.green;
-        case 'canceled':
-          return Colors.red;
-        case 'pending':
-          return Colors.blue;
-        default:
-          return Colors.grey;
-      }
-    }
-
     return DataRow(cells: [
       DataCell(Text('${index + 1}')),
-      DataCell(Text(booking.bookingId)),
-      DataCell(Text(booking.customerName)),
-      DataCell(Text(booking.service)),
+      DataCell(Text(booking.fullName)),
+      DataCell(Text(booking.phoneNumber)),
+      DataCell(Text(booking.email)),
       DataCell(Text(booking.date)),
+      DataCell(Text(booking.time)),
+      DataCell(Text(booking.destination)),
+      DataCell(Text(booking.cost)),
       DataCell(
         GestureDetector(
-          onTap: () {
-            updateStatus(index);
-            showSnackBar(context, 'Status changed to: ${bookings[index].status}', bookings[index].status);
-          },
+          onTap: () => updateStatus(index),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             decoration: BoxDecoration(
-              color: getStatusColor(booking.status),
+              color: booking.status == 'Confirmed'
+                  ? Colors.green
+                  : booking.status == 'Canceled'
+                      ? Colors.red
+                      : Colors.blue,
               borderRadius: BorderRadius.circular(5.0),
             ),
             child: Text(
