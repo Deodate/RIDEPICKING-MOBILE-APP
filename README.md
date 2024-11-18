@@ -1,5 +1,11 @@
 # RIDEPICKING-MOBILE-APP
 This is flutter mobile application
+[00]. CREATION OF EVENTS
+
+![image](https://github.com/user-attachments/assets/1642845c-f773-433e-80e8-0231e790c16d)
+
+
+
 [0]. FORM VALIDATION (Validate the form, Save to Supabase, Show loading states, Display success/error messages, Reset the form after successful submission)
 
 ![image](https://github.com/user-attachments/assets/d4b9fd75-12d5-4a87-82cc-9b890072d307)
