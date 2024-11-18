@@ -227,7 +227,7 @@ class _OrderFormState extends State<OrderForm> {
             const SizedBox(height: 10),
             _buildCarTypeDropdown(),
             const SizedBox(height: 10),
-            _buildTextField('Cost',
+            _buildTextField('0.00',
                 controller: _costController, readOnly: true),
             const SizedBox(height: 20),
             Row(
