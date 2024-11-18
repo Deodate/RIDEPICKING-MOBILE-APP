@@ -156,7 +156,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
               ),
               const SizedBox(height: 16.0),
 
-              // Plack Input
+              // Plate Input
               TextFormField(
                 decoration: const InputDecoration(
                   labelText: 'Plate',

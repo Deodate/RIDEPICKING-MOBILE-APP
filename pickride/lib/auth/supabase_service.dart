@@ -50,15 +50,15 @@ class _OrderFormState extends State<OrderForm> {
   final List<String> _carTypes = ['PICNIC', 'VOITURE'];
 
   Future<void> _saveBookings() async {
-    final fullName = _fullNameController.text.trim();
-    final phoneNumber = _phoneNumberController.text.trim();
-    final emailAddress = _emailController.text.trim();
-    final bookingDate = _dateController.text.isNotEmpty
-        ? DateTime.parse(_dateController.text)
-        : null;
-    final destination = _destinationController.text.trim();
-    final bookingTime = _selectedTime;
-    final cost = double.tryParse(_costController.text.replaceAll(' RWF', ''));
+   final fullName = _fullNameController.text.trim();
+  final phoneNumber = _phoneNumberController.text.trim();
+  final emailAddress = _emailController.text.trim();
+  final bookingDate = _dateController.text.isNotEmpty
+      ? DateTime.parse(_dateController.text)
+      : null;
+  final destination = _destinationController.text.trim();
+  final bookingTime = _selectedTime;
+  final cost = double.tryParse(_costController.text.replaceAll(' RWF', ''));
 
     if (fullName.isEmpty || phoneNumber.isEmpty || bookingTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -86,7 +86,7 @@ class _OrderFormState extends State<OrderForm> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Car ordering submitted successfully!'),
+            content: Text('Booking submitted successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -203,8 +203,8 @@ class _OrderFormState extends State<OrderForm> {
       backgroundColor: const Color(0xFF0A395D),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A395D),
-        title: const Text(
-          'Book A Ride',
+         title: const Text(
+          'Book a Ride',
           style: TextStyle(color: Colors.white),
         ),
       ),
@@ -226,58 +226,26 @@ class _OrderFormState extends State<OrderForm> {
             const SizedBox(height: 10),
             _buildCarTypeDropdown(),
             const SizedBox(height: 10),
-            _buildTextField('Cost',
-                controller: _costController, readOnly: true),
+            _buildTextField('Cost', controller: _costController, readOnly: true),
             const SizedBox(height: 20),
-            Row(
-              children: [
-                Spacer(), // This takes up all available space and pushes the button to the right
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.green, // Background color for the Save button
-                    shape: const RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.zero, // Set border radius to zero
-                    ),
-                  ),
-                  onPressed:
-                      _saveBookings, // Ensure the appropriate function is called
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Save',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                ),
-              ],
-            )
+            ElevatedButton(
+              onPressed: _saveBookings,
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Submit'),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTextField(String label,
+  Widget _buildTextField(String hintText,
       {TextEditingController? controller, bool readOnly = false}) {
     return TextField(
       controller: controller,
       readOnly: readOnly,
-      style:
-          const TextStyle(color: Colors.white), // Set input text color to white
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(
-            color: Colors.white), // Set placeholder text color to white
-        focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.white), // Set the border color to white (optional)
-        ),
-        enabledBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.white), // Set the border color to white (optional)
-        ),
-      ),
+      decoration: InputDecoration(hintText: hintText),
     );
   }
 
@@ -285,11 +253,7 @@ class _OrderFormState extends State<OrderForm> {
     return TextField(
       controller: _dateController,
       readOnly: true,
-      decoration: const InputDecoration(
-        hintText: 'Select Date',
-        hintStyle:
-            TextStyle(color: Colors.white), // Set the hint text color to white
-      ),
+      decoration: const InputDecoration(hintText: 'Select Date'),
       onTap: () => _selectDate(context),
     );
   }
@@ -297,27 +261,15 @@ class _OrderFormState extends State<OrderForm> {
   Widget _buildDestinationField() {
     return TextField(
       controller: _destinationController,
-      style: const TextStyle(
-          color: Colors.white), // Set the input text color to white
-      decoration: const InputDecoration(
-        hintText: 'Enter Destination',
-        hintStyle:
-            TextStyle(color: Colors.white), // Set the hint text color to white
-      ),
+      decoration: const InputDecoration(hintText: 'Enter Destination'),
     );
   }
 
   Widget _buildCarTypeDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedCarType,
-      hint: const Text(
-        'Select Car Type', // Placeholder text
-        style: TextStyle(
-            color: Colors.white), // Set the placeholder text color to white
-      ),
       items: _carTypes
-          .map((carType) =>
-              DropdownMenuItem(value: carType, child: Text(carType)))
+          .map((carType) => DropdownMenuItem(value: carType, child: Text(carType)))
           .toList(),
       onChanged: (newValue) => setState(() => _selectedCarType = newValue),
     );
@@ -333,15 +285,8 @@ class _OrderFormState extends State<OrderForm> {
     });
 
     return DropdownButtonFormField<String>(
-      value: _selectedTime, // Make sure to define _selectedTime
-      hint: const Text(
-        'Select Time', // Placeholder text
-        style: TextStyle(
-            color: Colors.white), // Set the placeholder text color to white
-      ),
-      items: times
-          .map((time) => DropdownMenuItem(value: time, child: Text(time)))
-          .toList(),
+      value: _selectedTime,
+      items: times.map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
       onChanged: (newValue) => setState(() => _selectedTime = newValue),
     );
   }
