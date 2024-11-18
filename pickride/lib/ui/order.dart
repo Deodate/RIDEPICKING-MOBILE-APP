@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/ui/onboarding_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() => runApp(const MyApp());
@@ -204,7 +205,7 @@ class _OrderFormState extends State<OrderForm> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A395D),
         title: const Text(
-          'Book A Ride',
+          'Book a Ride',
           style: TextStyle(color: Colors.white),
         ),
       ),
@@ -249,6 +250,29 @@ class _OrderFormState extends State<OrderForm> {
                           'Save',
                           style: TextStyle(color: Colors.white),
                         ),
+                ),
+                const SizedBox(width: 16.0), // Spacer between the buttons
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Colors.red, // Background color for the Cancel button
+                    shape: const RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.zero, // Set border radius to zero
+                    ),
+                  ),
+                  onPressed: () {
+                    // Navigate to the OnboardingScreen when the Cancel button is pressed
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => OnboardingScreen()),
+                    );
+                  },
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             )
