@@ -45,6 +45,7 @@ class _OrderFormState extends State<OrderForm> {
     {"name": "Kimironko Market", "distance_km": 7.2},
     {"name": "Kigali Convention Center", "distance_km": 4.3},
     {"name": "Remera", "distance_km": 2.0},
+    {"name": "Kicukiro", "distance_km": 3.34},
   ];
 
   // Car types for dropdown
