@@ -30,8 +30,8 @@ class Booking {
     required this.time,
     required this.destination,
     required this.cost,
-    String? status, // Made optional
-  }) : status = status ?? 'Pending'; // Set default value in initializer
+    String? status,
+  }) : status = status ?? 'Pending';
 
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
@@ -43,6 +43,7 @@ class Booking {
       time: json['booking_time'] ?? '',
       destination: json['destination'] ?? '',
       cost: (json['cost'] ?? 0.0).toString(),
+      status: json['status'] ?? 'Pending',  // Fetch status from database
     );
   }
 
