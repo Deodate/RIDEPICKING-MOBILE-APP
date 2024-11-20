@@ -1,6 +1,8 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({Key? key}) : super(key: key);
@@ -18,6 +20,9 @@ class _SignUpFormState extends State<SignUpForm> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
+  // Get Supabase client instance
+  final supabase = Supabase.instance.client;
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -31,32 +36,59 @@ class _SignUpFormState extends State<SignUpForm> {
   Future<void> _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
+      // Hash the password securely
+      String hashedPassword = sha256
+          .convert(utf8.encode(_passwordController.text.trim()))
+          .toString();
+
       try {
-        // Create user data map
-        final userData = {
+        // 1. Create auth user with email and password
+        final AuthResponse authResponse = await supabase.auth.signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          data: {
+            'full_name': _fullNameController.text.trim(),
+            'telephone': _telephoneController.text.trim(),
+          },
+        );
+
+        if (authResponse.user == null) {
+          throw 'Signup failed: Unable to create user';
+        }
+
+        // 2. Insert user profile data
+        await supabase.from('users').insert({
+          'id': authResponse.user!.id,
           'full_name': _fullNameController.text.trim(),
           'telephone': _telephoneController.text.trim(),
-          'email': _emailController.text.trim(),
-          'password': _passwordController.text, // Remember to hash before saving
-        };
+          'email': _emailController.text.trim().toLowerCase(),
+          'password_hash': hashedPassword,
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        });
 
-        // TODO: Add your API call or database operation here
-        // await YourAuthService.signUp(userData);
-
-        // Show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account created successfully!')),
+            const SnackBar(
+              content: Text(
+                  'Account created successfully! Please check your email to verify your account.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 5),
+            ),
           );
-          // Navigate to next screen
-          // Navigator.pushReplacementNamed(context, '/home');
+
+          await supabase.auth.signOut();
+          Navigator.of(context).pushReplacementNamed('/login');
         }
       } catch (e) {
-        // Show error message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${e.toString()}')),
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
           );
         }
       } finally {
@@ -118,7 +150,6 @@ class _SignUpFormState extends State<SignUpForm> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your telephone number';
                   }
-                  // Add your phone number validation regex here
                   if (!RegExp(r'^\+?[\d\s-]{10,}$').hasMatch(value)) {
                     return 'Please enter a valid telephone number';
                   }
@@ -152,7 +183,8 @@ class _SignUpFormState extends State<SignUpForm> {
                   if (value.length < 8) {
                     return 'Password must be at least 8 characters long';
                   }
-                  if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$').hasMatch(value)) {
+                  if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$')
+                      .hasMatch(value)) {
                     return 'Password must contain both letters and numbers';
                   }
                   return null;
@@ -191,10 +223,18 @@ class _SignUpFormState extends State<SignUpForm> {
                           ),
                         ),
                         child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Text(
                                 'Submit',
-                                style: TextStyle(fontSize: 18, color: Colors.white),
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.white),
                               ),
                       ),
                     ),
@@ -276,26 +316,25 @@ class _SignUpFormState extends State<SignUpForm> {
     required TextEditingController controller,
     required String hintText,
     bool obscureText = false,
-    TextInputType? keyboardType,
+    TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      validator: validator,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(color: Colors.white),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.grey[400]!),
+        hintStyle: const TextStyle(color: Colors.white60),
+        filled: true,
+        fillColor: Colors.blueGrey,
+        border: OutlineInputBorder(
+          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(8.0),
         ),
-        focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.white),
-        ),
-        errorStyle: const TextStyle(color: Colors.redAccent),
       ),
+      validator: validator,
     );
   }
 }
