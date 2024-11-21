@@ -1,7 +1,8 @@
+import 'package:crypto/crypto.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:crypto/crypto.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 
 class SignUpForm extends StatefulWidget {
@@ -9,6 +10,15 @@ class SignUpForm extends StatefulWidget {
 
   @override
   State<SignUpForm> createState() => _SignUpFormState();
+}
+
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+  runApp(const MaterialApp(home: SignUpForm()));
 }
 
 class _SignUpFormState extends State<SignUpForm> {
@@ -20,7 +30,6 @@ class _SignUpFormState extends State<SignUpForm> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
-  // Get Supabase client instance
   final supabase = Supabase.instance.client;
 
   @override
@@ -36,11 +45,6 @@ class _SignUpFormState extends State<SignUpForm> {
   Future<void> _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-
-      // Hash the password securely
-      String hashedPassword = sha256
-          .convert(utf8.encode(_passwordController.text.trim()))
-          .toString();
 
       try {
         // 1. Create auth user with email and password
@@ -63,7 +67,8 @@ class _SignUpFormState extends State<SignUpForm> {
           'full_name': _fullNameController.text.trim(),
           'telephone': _telephoneController.text.trim(),
           'email': _emailController.text.trim().toLowerCase(),
-          'password_hash': hashedPassword,
+          'password_hash':
+              sha256.convert(utf8.encode(_passwordController.text)).toString(),
           'created_at': DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
         });
@@ -295,12 +300,17 @@ class _SignUpFormState extends State<SignUpForm> {
                 child: Column(
                   children: [
                     Text(
-                      'Joyce Mutoni',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      '© Deodate Mugenzi',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
+                    SizedBox(height: 5),
                     Text(
-                      '@2024',
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                      'Powered by Ride Picking',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
                   ],
                 ),
@@ -324,17 +334,17 @@ class _SignUpFormState extends State<SignUpForm> {
       obscureText: obscureText,
       keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white),
+      validator: validator,
       decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: const TextStyle(color: Colors.white60),
         filled: true,
-        fillColor: Colors.blueGrey,
+        fillColor: Colors.grey[700],
+        hintText: hintText,
+        hintStyle: const TextStyle(color: Colors.white70),
         border: OutlineInputBorder(
-          borderSide: BorderSide.none,
           borderRadius: BorderRadius.circular(8.0),
+          borderSide: BorderSide.none,
         ),
       ),
-      validator: validator,
     );
   }
 }

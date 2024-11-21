@@ -20,6 +20,7 @@ dependencies:
   path_provider: ^2.0.16
   dotenv: ^4.2.0
   email_validator: ^2.1.17
+  crypto: ^3.0.1
  
 
 dev_dependencies:
