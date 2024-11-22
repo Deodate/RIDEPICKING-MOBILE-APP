@@ -36,7 +36,6 @@ class AdminDashboard extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // Top Row with Menu Icon and Dashboard Text
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -152,25 +151,17 @@ class AppDrawer extends StatelessWidget {
 
       if (shouldLogout != true) return;
 
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        },
-      );
-
       // Perform logout
       await Supabase.instance.client.auth.signOut();
 
-      Navigator.pop(context); // Remove loading indicator
-
+      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Logged out successfully'),
+          content: Text(
+            'Logged out successfully',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
       );
@@ -180,16 +171,15 @@ class AppDrawer extends StatelessWidget {
         MaterialPageRoute(builder: (context) => const OnboardingScreen()),
         (route) => false,
       );
-
     } catch (error) {
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Error during logout. Please try again.'),
+          content: Text(
+            'Error during logout. Please try again.',
+            style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
         ),
       );
     }

@@ -28,13 +28,37 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PICKRIDE',
-    home: const OnboardingScreen(),
+      home: const OnboardingScreen(),
       routes: {
-        '/admin': (context) => AdminPage(), // Add your AdminPage here
+        '/admin': (context) => AdminPage(),  // Defined route for Admin page
         '/login': (context) => const LoginForm(),
         '/signup': (context) => const SignUpForm(),
       },
+      onGenerateRoute: (settings) {
+        // Handle specific named routes
+        if (settings.name == '/admin') {
+          return MaterialPageRoute(builder: (context) => AdminPage());
+        }
+        return null;  // Return null if no matching route found
+      },
+      onUnknownRoute: (settings) {
+        // Fallback page when the route is not found
+        return MaterialPageRoute(builder: (context) => const NotFoundPage());
+      },
       debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+// NotFoundPage widget definition
+class NotFoundPage extends StatelessWidget {
+  const NotFoundPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page Not Found')),
+      body: const Center(child: Text('Sorry, this page does not exist!')),
     );
   }
 }

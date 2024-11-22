@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pickride/ui/login.dart';
-import 'package:pickride/ui/signupForm.dart';
-import 'package:pickride/ui/order.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -40,42 +37,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 leading: const Icon(Icons.home),
                 title: const Text('Home'),
                 onTap: () {
-                  Navigator.pop(context);
+                  // Navigate to the Home page using a named route
+                  Navigator.popAndPushNamed(context, '/');
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.person_add),
                 title: const Text('Sign up'),
                 onTap: () {
-                  // Navigate to the SignUp page
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SignUpForm()),
-                  );
+                  // Navigate to the SignUp page using a named route
+                  Navigator.popAndPushNamed(context, '/signup');
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.login),
                 title: const Text('Login'),
                 onTap: () {
-                  // Navigate to the SignUp page
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginForm()),
-                  );
+                  // Navigate to the Login page using a named route
+                  Navigator.popAndPushNamed(context, '/login');
                 },
               ),
-              //   ListTile(
-              //   leading: const Icon(Icons.login),
-              //   title: const Text('Dashboard'),
-              //   onTap: () {
-              //     // Navigate to the SignUp page
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(builder: (context) => AdminPage()),
-              //     );
-              //   },
-              // ),
             ],
           ),
         ),
@@ -116,11 +97,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
             onPressed: () {
-              // Navigate to the Order page
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const OrderForm()),
-              );
+              // Navigate to the Order page using a direct route
+              Navigator.pushNamed(context, '/order');
             },
             child: const Text(
               'Order Now',

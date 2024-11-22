@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LogoutHandler extends StatefulWidget {
   final Widget child;
+
   const LogoutHandler({Key? key, required this.child}) : super(key: key);
 
   @override
@@ -11,85 +12,76 @@ class LogoutHandler extends StatefulWidget {
 }
 
 class _LogoutHandlerState extends State<LogoutHandler> {
-  bool _isLoggingOut = false;
-
-  Future<void> handleLogout(BuildContext context) async {
-    // Show confirmation dialog
-    final bool? shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Logout'),
-          content: const Text('Are you sure you want to logout?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Logout',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldLogout != true) return;
-
-    setState(() {
-      _isLoggingOut = true;
-    });
-
+  Future<void> _handleLogout(BuildContext context) async {
     try {
-      // Log the logout attempt
+      // Show confirmation dialog
+      bool? shouldLogout = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to logout?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldLogout != true) return;
+
+      // Perform logout
       print('===== LOGOUT PROCESS STARTED =====');
 
-      // Clear any stored session data in Supabase
+      // Clear Supabase session
       await Supabase.instance.client.auth.signOut();
 
-      // Clear any local storage or cached data here if needed
-      
       print('Logout Successful');
 
+      // Navigate to onboarding screen and clear navigation stack
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const OnboardingScreen(),
+        ),
+        (route) => false,
+      );
+
       // Show success message
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logged out successfully'),
-            duration: Duration(seconds: 2),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Logged out successfully',
+            style: TextStyle(color: Colors.white),
           ),
-        );
-
-        // Navigate to onboarding screen and clear navigation stack
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const OnboardingScreen(),
-          ),
-          (route) => false, // This removes all previous routes
-        );
-      }
-
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (error) {
       print('Logout Error: $error');
-      
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error during logout. Please try again.'),
-            backgroundColor: Colors.red,
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Error during logout. Please try again.',
+            style: TextStyle(color: Colors.white),
           ),
-        );
-      }
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoggingOut = false;
-        });
-      }
       print('===== LOGOUT PROCESS COMPLETED =====');
     }
   }
@@ -100,10 +92,10 @@ class _LogoutHandlerState extends State<LogoutHandler> {
   }
 }
 
-// Example of a logout button that can be used in any screen
+// Logout button to be used on any screen
 class LogoutButton extends StatelessWidget {
   final Color? color;
-  
+
   const LogoutButton({
     Key? key,
     this.color,
@@ -118,7 +110,7 @@ class LogoutButton extends StatelessWidget {
       ),
       onPressed: () {
         final logoutState = context.findAncestorStateOfType<_LogoutHandlerState>();
-        logoutState?.handleLogout(context);
+        logoutState?._handleLogout(context);
       },
       tooltip: 'Logout',
     );
