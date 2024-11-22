@@ -13,6 +13,7 @@ class _BookingReportScreenState extends State<BookingReportScreen> {
     'Confirmed': 0,
     'Canceled': 0,
   };
+  double totalConfirmedAmount = 0.0; // Variable to store total confirmed amount
   bool _isLoading = true;
   String? _error;
 
@@ -38,22 +39,31 @@ class _BookingReportScreenState extends State<BookingReportScreen> {
 
       final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
 
-      // Count statuses
+      // Count statuses and calculate total amount for confirmed bookings
       final counts = {
         'Pending': 0,
         'Confirmed': 0,
         'Canceled': 0,
       };
 
+      double confirmedAmount = 0.0;
+
       for (var booking in data) {
         String status = booking['status'] ?? 'Pending';
+        double amount = booking['cost'] ?? 0.0; // Assuming 'cost' is the amount field
+
         if (counts.containsKey(status)) {
           counts[status] = counts[status]! + 1;
+        }
+
+        if (status == 'Confirmed') {
+          confirmedAmount += amount; // Add amount to total for confirmed
         }
       }
 
       setState(() {
         statusCounts = counts;
+        totalConfirmedAmount = confirmedAmount;
         _isLoading = false;
       });
     } catch (error) {
@@ -103,6 +113,9 @@ class _BookingReportScreenState extends State<BookingReportScreen> {
                           DataColumn(
                             label: Text('Report', style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
+                          DataColumn(
+                            label: Text('AMOUNT', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
                         ],
                         rows: statusCounts.entries
                             .map(
@@ -116,23 +129,36 @@ class _BookingReportScreenState extends State<BookingReportScreen> {
                                         print('${entry.key} count: ${entry.value}');
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: entry.value > 5
-                                            ? Colors.green
-                                            : Colors.red, // Change color based on the count
+                                        backgroundColor: _getStatusColor(entry.key), // Dynamic background color
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.zero, // Remove rounded corners
+                                        ),
                                       ),
                                       child: Text(
                                         entry.value.toString(),
                                         style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          color: Colors.white, // Button text color
                                         ),
                                       ),
                                     ),
                                   ),
+                                  // Display amount for each status (if needed)
+                                  DataCell(Text(
+                                    entry.key == 'Confirmed'
+                                        ? totalConfirmedAmount.toStringAsFixed(2)
+                                        : '0.00',
+                                  )),
                                 ],
                               ),
                             )
-                            .toList(),
+                            .toList()
+                          ..add(DataRow(
+                            cells: [
+                              DataCell(Text('Amount', style: TextStyle(fontWeight: FontWeight.bold))),
+                              DataCell(Text('')), // Empty cell for report
+                              DataCell(Text(totalConfirmedAmount.toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold))),
+                            ],
+                          )),
                       ),
                     ),
                   ),
@@ -148,5 +174,19 @@ class _BookingReportScreenState extends State<BookingReportScreen> {
               ),
             ),
     );
+  }
+
+  // Helper function to get the status color based on the status
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Pending':
+        return Colors.blue; // Blue for Pending
+      case 'Confirmed':
+        return Colors.green; // Green for Confirmed
+      case 'Canceled':
+        return Colors.red; // Red for Canceled
+      default:
+        return Colors.grey; // Default color
+    }
   }
 }
