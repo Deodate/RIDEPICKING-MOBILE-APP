@@ -4,6 +4,8 @@ import 'package:pickride/auth/CreateUserAccount.dart';
 import 'package:pickride/auth/UserListScreen.dart';
 import 'package:pickride/auth/addCar.dart';
 import 'package:pickride/auth/booking.dart';
+import 'package:pickride/ui/onboarding_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() => runApp(AdminPage());
 
@@ -83,7 +85,6 @@ class AdminDashboard extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to the BookedCarPage when clicked
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => BookingListScreen()),
@@ -124,6 +125,76 @@ class AdminDashboard extends StatelessWidget {
 }
 
 class AppDrawer extends StatelessWidget {
+  Future<void> _handleLogout(BuildContext context) async {
+    try {
+      bool? shouldLogout = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to logout?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldLogout != true) return;
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+
+      // Perform logout
+      await Supabase.instance.client.auth.signOut();
+
+      Navigator.pop(context); // Remove loading indicator
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logged out successfully'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Navigate to onboarding screen and clear navigation stack
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        (route) => false,
+      );
+
+    } catch (error) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error during logout. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -192,6 +263,14 @@ class AppDrawer extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => UserListScreen()),
               );
             },
+          ),
+          ListTile(
+            leading: Icon(Icons.logout, color: Colors.red),
+            title: const Text(
+              'Logout',
+              style: TextStyle(color: Colors.red),
+            ),
+            onTap: () => _handleLogout(context),
           ),
         ],
       ),
