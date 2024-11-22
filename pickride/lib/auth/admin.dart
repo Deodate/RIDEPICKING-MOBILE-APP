@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/auth/BookingReportScreen.dart';
 import 'package:pickride/auth/CarsListScreen.dart';
-import 'package:pickride/auth/CreateUserAccount.dart';
 import 'package:pickride/auth/UserListScreen.dart';
 import 'package:pickride/auth/addCar.dart';
 import 'package:pickride/auth/booking.dart';
@@ -86,11 +86,13 @@ class AdminDashboard extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => BookingListScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => BookingListScreen()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 40.0),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 15.0, horizontal: 40.0),
                   backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(0.0),
@@ -236,11 +238,13 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: Icon(Icons.person_add, color: Colors.blue),
-            title: const Text('Register User'),
+            title: const Text('Report'),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreateUserAccountScreen()),
+                MaterialPageRoute(
+                    builder: (context) =>
+                        BookingReportScreen()), // Use the class BookingReportScreen, not BookingReportScreenState
               );
             },
           ),
