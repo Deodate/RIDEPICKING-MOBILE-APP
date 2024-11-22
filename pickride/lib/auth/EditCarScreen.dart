@@ -6,7 +6,7 @@ class EditCarScreen extends StatefulWidget {
   final Car car;
   final Function onUpdate;
 
- EditCarScreen({required this.car, required this.onUpdate});
+  EditCarScreen({required this.car, required this.onUpdate});
 
   @override
   _EditCarScreenState createState() => _EditCarScreenState();
@@ -31,54 +31,53 @@ class _EditCarScreenState extends State<EditCarScreen> {
   }
 
   Future<void> _updateCar() async {
-  if (_formKey.currentState?.validate() ?? false) {
-    setState(() {
-      _isLoading = true;
-    });
+    if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isLoading = true;
+      });
 
-    try {
-      // Update car data in the Supabase database
-      final response = await _supabase.from('cars').update({
-        'car_name': _carName,
-        'car_type': _carType,
-        'plate': _plateNumber,
-      }).eq('id', widget.car.id);
+      try {
+        // Update car data in the Supabase database
+        final response = await _supabase.from('cars').update({
+          'car_name': _carName,
+          'car_type': _carType,
+          'plate': _plateNumber,
+        }).eq('id', widget.car.id);
 
-      // Check for successful update
-      if (response.error == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Car updated successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        // Check for successful update
+        if (response.error == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Car updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
 
-        widget.onUpdate(); // Notify parent to refresh the list
+          widget.onUpdate(); // Notify parent to refresh the list
 
-        Navigator.pop(context); // Go back after successful update
-      } else {
+          Navigator.pop(context); // Go back after successful update
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error updating car: ${response.error?.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error updating car: ${response.error?.message}'),
+            content: Text('Error updating car: ${error.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error updating car: ${error.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -160,12 +159,18 @@ class _EditCarScreenState extends State<EditCarScreen> {
                     _carType = value;
                   });
                 },
-                items: ['Picnic', 'Voiture', 'SELECT']
+                items: ['Picnic', 'Voiture']
                     .map((type) => DropdownMenuItem<String>(
                           value: type,
                           child: Text(type),
                         ))
                     .toList(),
+                validator: (value) {
+                  if (value == null) {
+                    return 'Please select a car type';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16.0),
 

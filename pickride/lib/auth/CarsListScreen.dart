@@ -236,6 +236,7 @@ class _CarsListScreenState extends State<CarsListScreen> {
         _filteredCars,
         _currentPage,
         onDelete: _deleteCar,
+        onUpdate: _fetchCars, // Pass the _fetchCars method here
         context: context,
       ),
       rowsPerPage: 5,
@@ -256,10 +257,11 @@ class CarDataTableSource extends DataTableSource {
   final List<Car> cars;
   final int currentPage;
   final Function(String) onDelete;
+  final Function() onUpdate; // Add onUpdate callback
   final BuildContext context;
 
   CarDataTableSource(this.cars, this.currentPage,
-      {required this.onDelete, required this.context});
+      {required this.onDelete, required this.onUpdate, required this.context});
 
   @override
   DataRow getRow(int index) {
@@ -283,10 +285,7 @@ class CarDataTableSource extends DataTableSource {
                 MaterialPageRoute(
                   builder: (context) => EditCarScreen(
                     car: car,
-                    onUpdate: () {
-                      // Reload car data after update
-                      _loadCars(); 
-                    },
+                    onUpdate: onUpdate, // Pass the onUpdate callback here
                   ),
                 ),
               );
