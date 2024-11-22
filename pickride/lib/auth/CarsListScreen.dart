@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/auth/EditCarScreen.dart';
 import 'package:pickride/auth/addCar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// Car Model
 class Car {
   final String name;
   final String carType;
@@ -25,6 +27,7 @@ class Car {
   }
 }
 
+// Cars List Screen
 class CarsListScreen extends StatefulWidget {
   @override
   _CarsListScreenState createState() => _CarsListScreenState();
@@ -45,6 +48,7 @@ class _CarsListScreenState extends State<CarsListScreen> {
     _fetchCars();
   }
 
+  // Fetch Cars from Supabase
   Future<void> _fetchCars() async {
     try {
       setState(() {
@@ -70,6 +74,7 @@ class _CarsListScreenState extends State<CarsListScreen> {
     }
   }
 
+  // Delete Car
   Future<void> _deleteCar(String carId) async {
     try {
       await _supabase.from('cars').delete().eq('id', carId);
@@ -92,6 +97,7 @@ class _CarsListScreenState extends State<CarsListScreen> {
     }
   }
 
+  // Filter Cars
   void _filterCars(String query) {
     setState(() {
       _searchQuery = query;
@@ -146,92 +152,12 @@ class _CarsListScreenState extends State<CarsListScreen> {
               child: ListView(
                 children: [
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      // Link-style "ADD" button
-                      TextButton(
-                        onPressed: () {
-                          // Navigate to the AddCarScreen page
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    AddCarScreen()), // Ensure AddCarScreen is imported
-                          );
-                        },
-                        child: Text(
-                          'ADD',
-                          style: TextStyle(
-                            color: Colors
-                                .white, // Blue color for the link-style text
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.green, // Green background color
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10),
-                          textStyle: TextStyle(fontSize: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(
-                          width: 10), // Space between button and search bar
-                      Expanded(
-                        child: Container(
-                          height: 40,
-                          child: TextField(
-                            onChanged: _filterCars,
-                            decoration: InputDecoration(
-                              labelText: 'Search',
-                              prefixIcon: Icon(Icons.search),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.blue),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.blue),
-                              ),
-                              contentPadding: EdgeInsets.symmetric(
-                                  vertical: 2, horizontal: 5),
-                            ),
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  // ADD Button and Search Bar
+                  _buildAddAndSearchBar(),
                   const SizedBox(height: 20),
                   _isLoading
                       ? Center(child: CircularProgressIndicator())
-                      : PaginatedDataTable(
-                          columns: const [
-                            DataColumn(label: Text('#')),
-                            DataColumn(label: Text('NAME')),
-                            DataColumn(label: Text('TYPE')),
-                            DataColumn(label: Text('PLATE #')),
-                            DataColumn(label: Text('Action')),
-                          ],
-                          source: CarDataTableSource(
-                            _filteredCars,
-                            _currentPage,
-                            onDelete: _deleteCar,
-                          ),
-                          rowsPerPage: 5,
-                          onPageChanged: (pageIndex) {
-                            setState(() {
-                              _currentPage = pageIndex;
-                            });
-                          },
-                          showCheckboxColumn: false,
-                          columnSpacing: 20,
-                          headingRowColor:
-                              MaterialStateProperty.all(Colors.blue),
-                        ),
+                      : _buildCarDataTable(),
                   const SizedBox(height: 20),
                   if (!_isLoading)
                     Center(
@@ -242,14 +168,98 @@ class _CarsListScreenState extends State<CarsListScreen> {
             ),
     );
   }
+
+  // Add Button and Search Bar Widget
+  Widget _buildAddAndSearchBar() {
+    return Row(
+      children: [
+        // Link-style "ADD" button
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AddCarScreen()),
+            );
+          },
+          child: Text(
+            'ADD',
+            style: TextStyle(color: Colors.white),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            textStyle: TextStyle(fontSize: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        // Search Bar
+        Expanded(
+          child: Container(
+            height: 40,
+            child: TextField(
+              onChanged: _filterCars,
+              decoration: InputDecoration(
+                labelText: 'Search',
+                prefixIcon: Icon(Icons.search),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+                contentPadding: EdgeInsets.symmetric(vertical: 2, horizontal: 5),
+              ),
+              style: TextStyle(fontSize: 12),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Car Data Table Widget
+  Widget _buildCarDataTable() {
+    return PaginatedDataTable(
+      columns: const [
+        DataColumn(label: Text('#')),
+        DataColumn(label: Text('NAME')),
+        DataColumn(label: Text('TYPE')),
+        DataColumn(label: Text('PLATE #')),
+        DataColumn(label: Text('Action')),
+      ],
+      source: CarDataTableSource(
+        _filteredCars,
+        _currentPage,
+        onDelete: _deleteCar,
+        context: context,
+      ),
+      rowsPerPage: 5,
+      onPageChanged: (pageIndex) {
+        setState(() {
+          _currentPage = pageIndex;
+        });
+      },
+      showCheckboxColumn: false,
+      columnSpacing: 20,
+      headingRowColor: MaterialStateProperty.all(Colors.blue),
+    );
+  }
 }
 
+// Data Table Source for Cars
 class CarDataTableSource extends DataTableSource {
   final List<Car> cars;
   final int currentPage;
   final Function(String) onDelete;
+  final BuildContext context;
 
-  CarDataTableSource(this.cars, this.currentPage, {required this.onDelete});
+  CarDataTableSource(this.cars, this.currentPage,
+      {required this.onDelete, required this.context});
 
   @override
   DataRow getRow(int index) {
@@ -268,7 +278,18 @@ class CarDataTableSource extends DataTableSource {
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.blue),
             onPressed: () {
-              // Handle edit action - You can navigate to AddCarScreen with car data
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditCarScreen(
+                    car: car,
+                    onUpdate: () {
+                      // Reload car data after update
+                      _loadCars(); 
+                    },
+                  ),
+                ),
+              );
             },
           ),
         ],

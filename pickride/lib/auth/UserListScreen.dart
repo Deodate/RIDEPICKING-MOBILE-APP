@@ -28,7 +28,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
         _error = null;
       });
 
-      final response = await _supabase.from('users').select().order('name');
+      final response = await _supabase.from('users').select().order('full_name');
 
       // Map the response to a list of User objects and filter out any null values
       final List<User?> fetchedUsers =
@@ -52,7 +52,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
       _searchQuery = query;
       _filteredUsers = _users
           .where((user) =>
-              user.name.toLowerCase().contains(query.toLowerCase()) ||
+              user.fullName.toLowerCase().contains(query.toLowerCase()) ||
               user.email.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
@@ -173,7 +173,7 @@ class UserDataTableSource extends DataTableSource {
 
     return DataRow(cells: [
       DataCell(Text('${index + 1}')),
-      DataCell(Text(user.name)),
+      DataCell(Text(user.fullName)),
       DataCell(Text(user.email)),
     ]);
   }
@@ -184,19 +184,19 @@ class UserDataTableSource extends DataTableSource {
   @override
   int get selectedRowCount => 0;
 
-   @override
+  @override
   bool get isRowCountApproximate => false; 
 }
 
 class User {
-  final String name;
+  final String fullName;
   final String email;
 
-  User({required this.name, required this.email});
+  User({required this.fullName, required this.email});
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      name: json['name'],
+      fullName: json['full_name'],
       email: json['email'],
     );
   }
