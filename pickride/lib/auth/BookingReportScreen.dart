@@ -101,7 +101,7 @@ class _BookingReportScreenState extends State<BookingReportScreen> {
                             label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                           DataColumn(
-                            label: Text('Count', style: TextStyle(fontWeight: FontWeight.bold)),
+                            label: Text('Report', style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ],
                         rows: statusCounts.entries
@@ -109,7 +109,26 @@ class _BookingReportScreenState extends State<BookingReportScreen> {
                               (entry) => DataRow(
                                 cells: [
                                   DataCell(Text(entry.key)),
-                                  DataCell(Text(entry.value.toString())),
+                                  DataCell(
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        // You can handle button press if needed
+                                        print('${entry.key} count: ${entry.value}');
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: entry.value > 5
+                                            ? Colors.green
+                                            : Colors.red, // Change color based on the count
+                                      ),
+                                      child: Text(
+                                        entry.value.toString(),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             )
