@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pickride/auth/admin.dart';
 import 'package:pickride/ui/login.dart';
+import 'package:pickride/ui/order.dart';
 import 'package:pickride/ui/signupForm.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -33,6 +34,7 @@ class MyApp extends StatelessWidget {
         '/admin': (context) => AdminPage(),  // Defined route for Admin page
         '/login': (context) => const LoginForm(),
         '/signup': (context) => const SignUpForm(),
+         '/order': (context) => OrderForm(),
       },
       onGenerateRoute: (settings) {
         // Handle specific named routes

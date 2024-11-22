@@ -77,27 +77,44 @@ class _BookingListScreenState extends State<BookingListScreen> {
     super.initState();
     _fetchBookings();
   }
-
-  Future<void> _fetchBookings() async {
+Future<void> _fetchBookings() async {
   try {
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
-    // Fetch bookings from Supabase without debug logging
+    // Fetch bookings from Supabase
     final response = await _supabase.from('bookings').select();
 
     if (response == null) {
       throw Exception('No data received from Supabase');
     }
 
-    final List<Map<String, dynamic>> data =
-        List<Map<String, dynamic>>.from(response);
+    final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
 
     final List<Booking> fetchedBookings = data.map((booking) {
       return Booking.fromJson(booking);
     }).toList();
+
+    // Get the current date in the format used by the bookings (assuming it's 'yyyy-MM-dd')
+    final currentDate = DateTime.now();
+
+    // Sort the bookings by date, placing the current date first
+    fetchedBookings.sort((a, b) {
+      final dateA = DateTime.parse(a.date);
+      final dateB = DateTime.parse(b.date);
+
+      // Place current date at the start
+      if (dateA.isAtSameMomentAs(currentDate)) {
+        return -1; // current date should come first
+      } else if (dateB.isAtSameMomentAs(currentDate)) {
+        return 1;
+      }
+
+      // Otherwise, order by date
+      return dateA.compareTo(dateB);
+    });
 
     setState(() {
       _bookings = fetchedBookings;
@@ -111,7 +128,6 @@ class _BookingListScreenState extends State<BookingListScreen> {
     });
   }
 }
-
 
   void _filterBookings(String query) {
     setState(() {
