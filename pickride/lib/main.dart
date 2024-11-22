@@ -35,6 +35,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginForm(),
         '/signup': (context) => const SignUpForm(),
          '/order': (context) => OrderForm(),
+         
       },
       onGenerateRoute: (settings) {
         // Handle specific named routes

@@ -252,12 +252,17 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: Icon(Icons.people, color: Colors.blue),
-            title: const Text('List of User'),
+            leading: Icon(Icons.people,
+                color: Colors
+                    .blue), // Change to 'report' icon for better representation
+            title: const Text('User List'),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => UserListScreen()),
+                MaterialPageRoute(
+                  builder: (context) =>
+                      UsersListScreen(), // Use the class BookingReportScreen, not BookingReportScreenState
+                ),
               );
             },
           ),

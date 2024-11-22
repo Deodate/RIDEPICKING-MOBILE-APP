@@ -1,36 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class User {
-  final String name;
-  final String username;
-  final String email;
-
-  User({required this.name, required this.username, required this.email});
-}
-
-class UserListScreen extends StatefulWidget {
+class UsersListScreen extends StatefulWidget {
   @override
-  _UserListScreenState createState() => _UserListScreenState();
+  _UsersListScreenState createState() => _UsersListScreenState();
 }
 
-class _UserListScreenState extends State<UserListScreen> {
-  List<User> _users = List.generate(
-    50,
-    (index) => User(
-      name: 'User $index',
-      username: 'Username $index',
-      email: 'user$index@example.com',
-    ),
-  );
-
+class _UsersListScreenState extends State<UsersListScreen> {
+  final _supabase = Supabase.instance.client;
+  List<User> _users = [];
   List<User> _filteredUsers = [];
   String _searchQuery = '';
   int _currentPage = 0;
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _filteredUsers = _users;
+    _fetchUsers();
+  }
+
+  Future<void> _fetchUsers() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final response = await _supabase.from('users').select().order('name');
+
+      // Map the response to a list of User objects and filter out any null values
+      final List<User?> fetchedUsers =
+          (response as List).map((user) => User.fromJson(user)).toList();
+
+      setState(() {
+        _users = fetchedUsers.whereType<User>().toList();
+        _filteredUsers = _users;
+        _isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        _error = 'Failed to fetch users: ${error.toString()}';
+        _isLoading = false;
+      });
+    }
   }
 
   void _filterUsers(String query) {
@@ -39,7 +53,6 @@ class _UserListScreenState extends State<UserListScreen> {
       _filteredUsers = _users
           .where((user) =>
               user.name.toLowerCase().contains(query.toLowerCase()) ||
-              user.username.toLowerCase().contains(query.toLowerCase()) ||
               user.email.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
@@ -49,108 +62,101 @@ class _UserListScreenState extends State<UserListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A395D), // Dark blue background
+        backgroundColor: const Color(0xFF0A395D),
         title: const Text(
-          'LIST OF USERS',
+          'USER LIST',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white, // White text color
+            color: Colors.white,
           ),
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back,
-              color: Colors.white), // White icon color
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _fetchUsers,
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            const SizedBox(height: 1),
-            const Center(
-              child: Text(
-                '',
-              ),
-            ),
-            const SizedBox(height: 10),
-            // Search Input positioned on the right side with specific dimensions
-            Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                width: 170, // Set width to 150px
-                height: 40, // Set height to 40px
-                child: TextField(
-                  onChanged: _filterUsers,
-                  decoration: InputDecoration(
-                    labelText: 'Search',
-                    prefixIcon: Icon(Icons.search),
-                    // Set border when not focused
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(
-                          color: Colors
-                              .blue), // Blue border color when not focused
-                    ),
-                    // Set border when focused
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(
-                          color: Colors.blue), // Blue border color when focused
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                        vertical: 2, horizontal: 5), // Adjust padding
-                  ),
-                  style: TextStyle(
-                      fontSize: 12), // Set font size for search input text
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-            // Paginated Table
-            PaginatedDataTable(
-              columns: const [
-                DataColumn(label: Text('#')),
-                DataColumn(label: Text('Name')),
-                DataColumn(label: Text('Username')),
-                DataColumn(label: Text('Email')),
-                DataColumn(label: Text('Action')),
-              ],
-              source: UserDataTableSource(_filteredUsers, _currentPage),
-              rowsPerPage: 5, // Display 5 rows per page
-              onPageChanged: (pageIndex) {
-                setState(() {
-                  _currentPage = pageIndex;
-                });
-              },
-              showCheckboxColumn: false,
-              columnSpacing: 20,
-              headingRowColor: MaterialStateProperty.all(
-                  Colors.blue), // Set header background to blue
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: Text('Page: ${_currentPage + 1}'),
-            ),
-            const SizedBox(height: 20),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 20.0),
+      body: _error != null
+          ? Center(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Joyce Mutoni',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
+                  Text(_error!, style: TextStyle(color: Colors.red)),
+                  ElevatedButton(
+                    onPressed: _fetchUsers,
+                    child: Text('Retry'),
                   ),
-                  Text('© 2024 PickRide Inc.',
-                      style: TextStyle(color: Colors.black, fontSize: 12)),
+                ],
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ListView(
+                children: [
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 40,
+                          child: TextField(
+                            onChanged: _filterUsers,
+                            decoration: InputDecoration(
+                              labelText: 'Search',
+                              prefixIcon: Icon(Icons.search),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.blue),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.blue),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(vertical: 2, horizontal: 5),
+                            ),
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _isLoading
+                      ? Center(child: CircularProgressIndicator())
+                      : PaginatedDataTable(
+                          columns: const [
+                            DataColumn(label: Text('#')),
+                            DataColumn(label: Text('NAME')),
+                            DataColumn(label: Text('EMAIL')),
+                          ],
+                          source: UserDataTableSource(
+                            _filteredUsers,
+                            _currentPage,
+                          ),
+                          rowsPerPage: 5,
+                          onPageChanged: (pageIndex) {
+                            setState(() {
+                              _currentPage = pageIndex;
+                            });
+                          },
+                          showCheckboxColumn: false,
+                          columnSpacing: 20,
+                          headingRowColor: MaterialStateProperty.all(Colors.blue),
+                        ),
+                  const SizedBox(height: 20),
+                  if (!_isLoading)
+                    Center(
+                      child: Text('Page: ${_currentPage + 1}'),
+                    ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -162,30 +168,13 @@ class UserDataTableSource extends DataTableSource {
   UserDataTableSource(this.users, this.currentPage);
 
   @override
-  DataRow getRow(int index) {
-    if (index >= users.length) return null as DataRow;
+  DataRow? getRow(int index) {
     final user = users[index];
+
     return DataRow(cells: [
-      DataCell(Text('${index + 1}')), // Serial number
+      DataCell(Text('${index + 1}')),
       DataCell(Text(user.name)),
-      DataCell(Text(user.username)),
       DataCell(Text(user.email)),
-      DataCell(Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () {
-              // Handle delete action
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.blue),
-            onPressed: () {
-              // Handle edit action
-            },
-          ),
-        ],
-      )),
     ]);
   }
 
@@ -193,8 +182,22 @@ class UserDataTableSource extends DataTableSource {
   int get rowCount => users.length;
 
   @override
-  bool get isRowCountApproximate => false;
-
-  @override
   int get selectedRowCount => 0;
+
+   @override
+  bool get isRowCountApproximate => false; 
+}
+
+class User {
+  final String name;
+  final String email;
+
+  User({required this.name, required this.email});
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      name: json['name'],
+      email: json['email'],
+    );
+  }
 }
