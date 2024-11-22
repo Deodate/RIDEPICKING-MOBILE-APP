@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/auth/admin.dart';
+import 'package:pickride/ui/login.dart';
+import 'package:pickride/ui/signupForm.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pickride/ui/onboarding_screen.dart';
@@ -6,7 +9,7 @@ import 'package:pickride/ui/onboarding_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load the .env file
+  // Load the .env file 
   await dotenv.load(fileName: ".env");
 
   // Initialize Supabase
@@ -23,9 +26,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'PICKRIDE',
-      home: OnboardingScreen(),
+    home: const OnboardingScreen(),
+      routes: {
+        '/admin': (context) => AdminPage(), // Add your AdminPage here
+        '/login': (context) => const LoginForm(),
+        '/signup': (context) => const SignUpForm(),
+      },
       debugShowCheckedModeBanner: false,
     );
   }
