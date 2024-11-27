@@ -45,7 +45,14 @@ class _EditCarScreenState extends State<EditCarScreen> {
         }).eq('id', widget.car.id);
 
         // Check for successful update
-        if (response.error == null) {
+        if (response.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error updating car: ${response.error?.message ?? 'Unknown error'}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Car updated successfully!'),
@@ -56,13 +63,6 @@ class _EditCarScreenState extends State<EditCarScreen> {
           widget.onUpdate(); // Notify parent to refresh the list
 
           Navigator.pop(context); // Go back after successful update
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error updating car: ${response.error?.message}'),
-              backgroundColor: Colors.red,
-            ),
-          );
         }
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
