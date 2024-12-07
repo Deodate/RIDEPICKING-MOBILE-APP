@@ -3,6 +3,8 @@ import 'package:pickride/auth/admin.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AddCarScreen extends StatefulWidget {
+  const AddCarScreen({super.key});
+
   @override
   _AddCarScreenState createState() => _AddCarScreenState();
 }

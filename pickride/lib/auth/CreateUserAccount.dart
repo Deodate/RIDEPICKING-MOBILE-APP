@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pickride/auth/admin.dart';
 
 class CreateUserAccountScreen extends StatefulWidget {
+  const CreateUserAccountScreen({super.key});
+
   @override
   _CreateUserAccountScreenState createState() =>
       _CreateUserAccountScreenState();

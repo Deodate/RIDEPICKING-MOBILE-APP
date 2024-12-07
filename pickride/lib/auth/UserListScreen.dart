@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UsersListScreen extends StatefulWidget {
+  const UsersListScreen({super.key});
+
   @override
   _UsersListScreenState createState() => _UsersListScreenState();
 }
@@ -103,7 +105,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: Container(
+                        child: SizedBox(
                           height: 40,
                           child: TextField(
                             onChanged: _filterUsers,
@@ -147,7 +149,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
                           },
                           showCheckboxColumn: false,
                           columnSpacing: 20,
-                          headingRowColor: MaterialStateProperty.all(Colors.blue),
+                          headingRowColor: WidgetStateProperty.all(Colors.blue),
                         ),
                   const SizedBox(height: 20),
                   if (!_isLoading)

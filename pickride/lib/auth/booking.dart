@@ -59,6 +59,8 @@ class Booking {
 }
 
 class BookingListScreen extends StatefulWidget {
+  const BookingListScreen({super.key});
+
   @override
   _BookingListScreenState createState() => _BookingListScreenState();
 }
@@ -86,10 +88,6 @@ Future<void> _fetchBookings() async {
 
     // Fetch bookings from Supabase
     final response = await _supabase.from('bookings').select();
-
-    if (response == null) {
-      throw Exception('No data received from Supabase');
-    }
 
     final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
 
@@ -297,7 +295,7 @@ Future<void> _fetchBookings() async {
                   Expanded(
                     child: SingleChildScrollView(
                       child: PaginatedDataTable(
-                        headingRowColor: MaterialStateColor.resolveWith(
+                        headingRowColor: WidgetStateColor.resolveWith(
                             (states) => Color(0xFFe2e3e5)),
                         columns: const [
                           DataColumn(

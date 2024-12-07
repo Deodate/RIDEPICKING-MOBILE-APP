@@ -29,6 +29,8 @@ class Car {
 
 // Cars List Screen
 class CarsListScreen extends StatefulWidget {
+  const CarsListScreen({super.key});
+
   @override
   _CarsListScreenState createState() => _CarsListScreenState();
 }
@@ -181,10 +183,6 @@ class _CarsListScreenState extends State<CarsListScreen> {
               MaterialPageRoute(builder: (context) => AddCarScreen()),
             );
           },
-          child: Text(
-            'ADD',
-            style: TextStyle(color: Colors.white),
-          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -193,11 +191,15 @@ class _CarsListScreenState extends State<CarsListScreen> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
+          child: Text(
+            'ADD',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
         const SizedBox(width: 10),
         // Search Bar
         Expanded(
-          child: Container(
+          child: SizedBox(
             height: 40,
             child: TextField(
               onChanged: _filterCars,
@@ -247,7 +249,7 @@ class _CarsListScreenState extends State<CarsListScreen> {
       },
       showCheckboxColumn: false,
       columnSpacing: 20,
-      headingRowColor: MaterialStateProperty.all(Colors.blue),
+      headingRowColor: WidgetStateProperty.all(Colors.blue),
     );
   }
 }

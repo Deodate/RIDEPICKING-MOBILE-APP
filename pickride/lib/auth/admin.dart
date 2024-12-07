@@ -10,6 +10,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() => runApp(AdminPage());
 
 class AdminPage extends StatelessWidget {
+  const AdminPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -23,6 +25,8 @@ class AdminPage extends StatelessWidget {
 }
 
 class AdminDashboard extends StatelessWidget {
+  const AdminDashboard({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -126,6 +130,8 @@ class AdminDashboard extends StatelessWidget {
 }
 
 class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key});
+
   Future<void> _handleLogout(BuildContext context) async {
     try {
       bool? shouldLogout = await showDialog<bool>(

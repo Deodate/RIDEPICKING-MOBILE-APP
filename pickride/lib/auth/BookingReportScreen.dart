@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BookingReportScreen extends StatefulWidget {
+  const BookingReportScreen({super.key});
+
   @override
   _BookingReportScreenState createState() => _BookingReportScreenState();
 }
@@ -32,10 +34,6 @@ class _BookingReportScreenState extends State<BookingReportScreen> {
 
       // Fetch bookings from Supabase
       final response = await _supabase.from('bookings').select();
-
-      if (response == null) {
-        throw Exception('No data received from Supabase');
-      }
 
       final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
 
@@ -104,7 +102,7 @@ class _BookingReportScreenState extends State<BookingReportScreen> {
                   Expanded(
                     child: SingleChildScrollView(
                       child: DataTable(
-                        headingRowColor: MaterialStateColor.resolveWith(
+                        headingRowColor: WidgetStateColor.resolveWith(
                             (states) => Color(0xFFe2e3e5)),
                         columns: const [
                           DataColumn(

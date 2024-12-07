@@ -4,7 +4,7 @@ import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
 class LoginForm extends StatefulWidget {
-  const LoginForm({Key? key}) : super(key: key);
+  const LoginForm({super.key});
 
   @override
   _LoginFormState createState() => _LoginFormState();
@@ -60,20 +60,16 @@ class _LoginFormState extends State<LoginForm> {
           .eq('password_hash', hashedPassword)
           .single();
 
-      if (response != null) {
-        print('Login Successful');
-        
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login Successful!')),
-        );
+      print('Login Successful');
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login Successful!')),
+      );
 
-        // Navigate to admin page
-        Navigator.pushReplacementNamed(context, '/admin');
-      } else {
-        throw 'Invalid email or password';
-      }
-
+      // Navigate to admin page
+      Navigator.pushReplacementNamed(context, '/admin');
+    
     } on PostgrestException catch (error) {
       print('Supabase Login Error:');
       print('Error Code: ${error.code}');

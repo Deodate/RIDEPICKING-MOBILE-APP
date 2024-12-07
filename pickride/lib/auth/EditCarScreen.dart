@@ -6,7 +6,7 @@ class EditCarScreen extends StatefulWidget {
   final Car car;
   final Function onUpdate;
 
-  EditCarScreen({required this.car, required this.onUpdate});
+  const EditCarScreen({super.key, required this.car, required this.onUpdate});
 
   @override
   _EditCarScreenState createState() => _EditCarScreenState();

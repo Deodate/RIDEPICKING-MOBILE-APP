@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class LogoutHandler extends StatefulWidget {
   final Widget child;
 
-  const LogoutHandler({Key? key, required this.child}) : super(key: key);
+  const LogoutHandler({super.key, required this.child});
 
   @override
   _LogoutHandlerState createState() => _LogoutHandlerState();
@@ -97,9 +97,9 @@ class LogoutButton extends StatelessWidget {
   final Color? color;
 
   const LogoutButton({
-    Key? key,
+    super.key,
     this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -124,11 +124,11 @@ class LogoutAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Color foregroundColor;
 
   const LogoutAppBar({
-    Key? key,
+    super.key,
     required this.title,
     this.backgroundColor = const Color(0xFF0A395D),
     this.foregroundColor = Colors.white,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
