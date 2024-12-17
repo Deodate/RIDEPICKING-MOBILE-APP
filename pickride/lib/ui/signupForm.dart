@@ -18,7 +18,7 @@ class _SignUpFormState extends State<SignUpForm> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _roleController = TextEditingController();
-  final _driverController = TextEditingController();
+  // final _driverController = TextEditingController();
 
   bool _isLoading = false;
   String _errorMessage = '';
@@ -43,7 +43,7 @@ class _SignUpFormState extends State<SignUpForm> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _roleController.dispose();
-    _driverController.dispose();
+    // _driverController.dispose();
     super.dispose();
   }
 
@@ -59,8 +59,7 @@ class _SignUpFormState extends State<SignUpForm> {
         _emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty ||
         _confirmPasswordController.text.trim().isEmpty ||
-        _roleController.text.trim().isEmpty ||
-        _driverController.text.trim().isEmpty) {
+        _roleController.text.trim().isEmpty) {
       setState(() => _errorMessage = 'All fields are required');
       return false;
     }
@@ -111,109 +110,86 @@ class _SignUpFormState extends State<SignUpForm> {
     }
   }
 
-  Future<void> _registerUser() async {
-    // Log the start of the registration process
-    print('===== REGISTRATION PROCESS STARTED =====');
+ Future<void> _registerUser() async {
+  // Log the start of the registration process
+  print('===== REGISTRATION PROCESS STARTED =====');
 
-    // Log input validation details
-    print('Form Validation Check:');
-    print('Full Name: ${_fullNameController.text.trim()}');
-    print('Full Name Length: ${_fullNameController.text.trim().length}');
-    print('Telephone: ${_telephoneController.text.trim()}');
-    print('Telephone Length: ${_telephoneController.text.trim().length}');
-    print('Email: ${_emailController.text.trim()}');
-    print('Password Length: ${_passwordController.text.length}');
-    print('Confirm Password Length: ${_confirmPasswordController.text.length}');
-    print('Role: ${_roleController.text.trim()}');
-    print('Driver: ${_driverController.text.trim()}');
+  // Form validation
+  if (!_validateForm()) {
+    print('Form Validation Failed');
+    return;
+  }
 
-    // Form validation
-    if (!_validateForm()) {
-      print('Form Validation Failed');
-      return;
-    }
+  setState(() {
+    _isLoading = true;
+    _errorMessage = '';
+  });
 
+  try {
+    // Hash password
+    final hashedPassword = _hashPassword(_passwordController.text);
+
+    // Prepare user data for insertion
+    final userData = {
+      'full_name': _fullNameController.text.trim(),
+      'telephone': _telephoneController.text.trim(),
+      'email': _emailController.text.trim(),
+      'password_hash': hashedPassword,
+      'role': _roleController.text.trim(),
+      // Optional: Add driver information if role is 'Driver'
+      // 'assigned_driver': _roleController.text.trim() == 'Driver' 
+      //     ? _driverController.text.trim() 
+      //     : null,
+      // Optional: Add timestamp of registration
+      'created_at': DateTime.now().toIso8601String(),
+    };
+
+    // Attempt Supabase insertion
+    final response = await Supabase.instance.client
+        .from('users')
+        .insert(userData)
+        .select();
+
+    // Log successful registration details
+    print('Registration Successful');
+    print('Inserted User Data: $userData');
+
+    // Show success snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Registration Successful!')),
+    );
+
+    // Navigate to login page
+    Navigator.pushReplacementNamed(context, '/login');
+  } on PostgrestException catch (error) {
+    // Detailed Supabase error logging
+    print('Supabase Registration Error:');
+    print('Error Code: ${error.code}');
+    print('Error Message: ${error.message}');
+
+    // Set user-friendly error message
     setState(() {
-      _isLoading = true;
-      _errorMessage = '';
+      _errorMessage = _mapSupabaseError(error);
+    });
+  } catch (error, stackTrace) {
+    // Comprehensive unexpected error logging
+    print('Unexpected Registration Error:');
+    print('Error Details: ${error.toString()}');
+
+    // Set generic error message
+    setState(() {
+      _errorMessage = 'An unexpected error occurred. Please try again.';
+    });
+  } finally {
+    // Ensure loading state is always turned off
+    setState(() {
+      _isLoading = false;
     });
 
-    try {
-      // Log pre-registration details
-      print('Pre-Registration Details:');
-      print('Full Name: ${_fullNameController.text.trim()}');
-      print('Telephone: ${_telephoneController.text.trim()}');
-      print('Email: ${_emailController.text.trim()}');
-      print('Role: ${_roleController.text.trim()}');
-      print('Driver: ${_driverController.text.trim()}');
-
-      // Hash password
-      final hashedPassword = _hashPassword(_passwordController.text);
-
-      // Log hashed password (be cautious with logging actual hashes in production)
-      print('Password Hashed:');
-      print('Hash Length: ${hashedPassword.length}');
-      print('Hash Prefix: ${hashedPassword.substring(0, 10)}');
-
-      // Attempt Supabase insertion with detailed logging
-      print('Attempting Supabase Insertion');
-
-      final response = await Supabase.instance.client
-          .from('users')
-          .insert({
-            'full_name': _fullNameController.text.trim(),
-            'telephone': _telephoneController.text.trim(),
-            'email': _emailController.text.trim(),
-            'password_hash': hashedPassword,
-            'role': _roleController.text.trim(),
-            'driver': _driverController.text.trim(),
-          })
-          .select();
-
-      // Log successful registration details
-      print('Registration Successful');
-      print('Response Type: ${response.runtimeType}');
-      print('Response Details: ${response.toString()}');
-
-      // Show success snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration Successful!')),
-      );
-
-      // Navigate to login page
-      Navigator.pushReplacementNamed(context, '/login');
-    } on PostgrestException catch (error) {
-      // Detailed Supabase error logging
-      print('Supabase Registration Error:');
-      print('Error Code: ${error.code}');
-      print('Error Message: ${error.message}');
-      print('Error Hint: ${error.hint ?? 'No additional hint'}');
-
-      // Set user-friendly error message
-      setState(() {
-        _errorMessage = _mapSupabaseError(error);
-      });
-    } catch (error, stackTrace) {
-      // Comprehensive unexpected error logging
-      print('Unexpected Registration Error:');
-      print('Error Type: ${error.runtimeType}');
-      print('Error Details: ${error.toString()}');
-      print('StackTrace: $stackTrace');
-
-      // Set generic error message
-      setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
-      });
-    } finally {
-      // Ensure loading state is always turned off
-      setState(() {
-        _isLoading = false;
-      });
-
-      // Log end of registration process
-      print('===== REGISTRATION PROCESS COMPLETED =====');
-    }
+    // Log end of registration process
+    print('===== REGISTRATION PROCESS COMPLETED =====');
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -255,15 +231,13 @@ class _SignUpFormState extends State<SignUpForm> {
             _buildTextField('Telephone', _telephoneController, keyboardType: TextInputType.phone),
             const SizedBox(height: 10),
             _buildTextField('Email Address', _emailController, keyboardType: TextInputType.emailAddress),
+             const SizedBox(height: 10),
+            _buildAutocompleteField('Role', _roleController, _filteredRoles, _filterRoles),
             const SizedBox(height: 10),
             _buildTextField('Password', _passwordController, obscureText: true),
             const SizedBox(height: 10),
             _buildTextField('Confirm Password', _confirmPasswordController, obscureText: true),
             const SizedBox(height: 10),
-            _buildAutocompleteField('Role', _roleController, _filteredRoles, _filterRoles),
-            const SizedBox(height: 10),
-            _buildAutocompleteField('Driver', _driverController, _filteredDrivers, _filterDrivers),
-            const SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
