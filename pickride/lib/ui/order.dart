@@ -26,6 +26,7 @@ class OrderForm extends StatefulWidget {
 }
 
 class _OrderFormState extends State<OrderForm> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Add this line
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -52,6 +53,9 @@ class _OrderFormState extends State<OrderForm> {
   final List<String> _carTypes = ['PICNIC', 'VOITURE'];
 
   Future<void> _saveBookings() async {
+    if (!_formKey.currentState!.validate()) {
+      return; // Stop if validation fails
+    }
     final fullName = _fullNameController.text.trim();
     final phoneNumber = _phoneNumberController.text.trim();
     final emailAddress = _emailController.text.trim();
@@ -210,74 +214,77 @@ class _OrderFormState extends State<OrderForm> {
           style: TextStyle(color: Colors.white),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            _buildTextField('Full Name', controller: _fullNameController),
-            const SizedBox(height: 10),
-            _buildTextField('Phone number', controller: _phoneNumberController),
-            const SizedBox(height: 10),
-            _buildTextField('Email Address', controller: _emailController),
-            const SizedBox(height: 10),
-            _buildDropdownTimePicker(),
-            const SizedBox(height: 10),
-            _buildDateField(),
-            const SizedBox(height: 10),
-            _buildDestinationField(),
-            const SizedBox(height: 10),
-            _buildCarTypeDropdown(),
-            const SizedBox(height: 10),
-            _buildTextField('0.00',
-                controller: _costController, readOnly: true),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Spacer(), // This takes up all available space and pushes the button to the right
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.green, // Background color for the Save button
-                    shape: const RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.zero, // Set border radius to zero
+      body: Form(
+        key: _formKey, // Add this line
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              _buildTextField('Full Name', controller: _fullNameController),
+              const SizedBox(height: 10),
+              _buildTextField('Phone number', controller: _phoneNumberController),
+              const SizedBox(height: 10),
+              _buildTextField('Email Address', controller: _emailController),
+              const SizedBox(height: 10),
+              _buildDropdownTimePicker(),
+              const SizedBox(height: 10),
+              _buildDateField(),
+              const SizedBox(height: 10),
+              _buildDestinationField(),
+              const SizedBox(height: 10),
+              _buildCarTypeDropdown(),
+              const SizedBox(height: 10),
+              _buildTextField('0.00',
+                  controller: _costController, readOnly: true),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Spacer(), // This takes up all available space and pushes the button to the right
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Colors.green, // Background color for the Save button
+                      shape: const RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.zero, // Set border radius to zero
+                      ),
+                    ),
+                    onPressed:
+                        _saveBookings, // Ensure the appropriate function is called
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Save',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                  ),
+                  const SizedBox(width: 16.0), // Spacer between the buttons
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Colors.red, // Background color for the Cancel button
+                      shape: const RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.zero, // Set border radius to zero
+                      ),
+                    ),
+                    onPressed: () {
+                      // Navigate to the OnboardingScreen when the Cancel button is pressed
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => OnboardingScreen()),
+                      );
+                    },
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
-                  onPressed:
-                      _saveBookings, // Ensure the appropriate function is called
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Save',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                ),
-                const SizedBox(width: 16.0), // Spacer between the buttons
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.red, // Background color for the Cancel button
-                    shape: const RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.zero, // Set border radius to zero
-                    ),
-                  ),
-                  onPressed: () {
-                    // Navigate to the OnboardingScreen when the Cancel button is pressed
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => OnboardingScreen()),
-                    );
-                  },
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            )
-          ],
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -285,24 +292,46 @@ class _OrderFormState extends State<OrderForm> {
 
   Widget _buildTextField(String label,
       {TextEditingController? controller, bool readOnly = false}) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       readOnly: readOnly,
-      style:
-          const TextStyle(color: Colors.white), // Set input text color to white
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(
-            color: Colors.white), // Set placeholder text color to white
+        labelStyle: const TextStyle(color: Colors.white),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.white), // Set the border color to white (optional)
+          borderSide: BorderSide(color: Colors.white),
         ),
         enabledBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(
-              color: Colors.white), // Set the border color to white (optional)
+          borderSide: BorderSide(color: Colors.white),
         ),
+        errorStyle: const TextStyle(color: Colors.red),
       ),
+      validator: label == 'Full Name'
+          ? (value) {
+              if (value == null || value.isEmpty) {
+                return 'Full name is required';
+              }
+
+              // Split the name and check for two words
+              final nameParts = value.trim().split(' ');
+
+              // Check if there are exactly two words
+              if (nameParts.length != 2) {
+                return 'Please enter your first and last name';
+              }
+
+              // Check if both parts contain only letters
+              for (var namePart in nameParts) {
+                if (!RegExp(r'^[a-zA-Z]+$').hasMatch(namePart)) {
+                  return 'Name can only contain letters';
+                }
+              }
+
+              return null;
+            }
+          : null,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
     );
   }
 

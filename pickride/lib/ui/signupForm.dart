@@ -17,9 +17,23 @@ class _SignUpFormState extends State<SignUpForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _roleController = TextEditingController();
+  final _driverController = TextEditingController();
 
   bool _isLoading = false;
   String _errorMessage = '';
+
+  List<String> _roles = ['Administration', 'Driver'];
+  List<String> _filteredRoles = [];
+  List<String> _drivers = ['John Doe', 'Jane Smith', 'Bob Johnson'];
+  List<String> _filteredDrivers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredRoles = _roles;
+    _filteredDrivers = _drivers;
+  }
 
   @override
   void dispose() {
@@ -28,6 +42,8 @@ class _SignUpFormState extends State<SignUpForm> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _roleController.dispose();
+    _driverController.dispose();
     super.dispose();
   }
 
@@ -42,7 +58,9 @@ class _SignUpFormState extends State<SignUpForm> {
         _telephoneController.text.trim().isEmpty ||
         _emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty ||
-        _confirmPasswordController.text.trim().isEmpty) {
+        _confirmPasswordController.text.trim().isEmpty ||
+        _roleController.text.trim().isEmpty ||
+        _driverController.text.trim().isEmpty) {
       setState(() => _errorMessage = 'All fields are required');
       return false;
     }
@@ -70,7 +88,19 @@ class _SignUpFormState extends State<SignUpForm> {
     return true;
   }
 
-  String _mapSupabaseError(PostgrestException error) { 
+  void _filterRoles(String value) {
+    setState(() {
+      _filteredRoles = _roles.where((role) => role.toLowerCase().contains(value.toLowerCase())).toList();
+    });
+  }
+
+  void _filterDrivers(String value) {
+    setState(() {
+      _filteredDrivers = _drivers.where((driver) => driver.toLowerCase().contains(value.toLowerCase())).toList();
+    });
+  }
+
+  String _mapSupabaseError(PostgrestException error) {
     switch (error.code) {
       case '23505': // Unique constraint violation (duplicate entry)
         return 'This email or phone number is already registered. Please use a different one.';
@@ -84,7 +114,7 @@ class _SignUpFormState extends State<SignUpForm> {
   Future<void> _registerUser() async {
     // Log the start of the registration process
     print('===== REGISTRATION PROCESS STARTED =====');
-    
+
     // Log input validation details
     print('Form Validation Check:');
     print('Full Name: ${_fullNameController.text.trim()}');
@@ -94,6 +124,8 @@ class _SignUpFormState extends State<SignUpForm> {
     print('Email: ${_emailController.text.trim()}');
     print('Password Length: ${_passwordController.text.length}');
     print('Confirm Password Length: ${_confirmPasswordController.text.length}');
+    print('Role: ${_roleController.text.trim()}');
+    print('Driver: ${_driverController.text.trim()}');
 
     // Form validation
     if (!_validateForm()) {
@@ -112,10 +144,12 @@ class _SignUpFormState extends State<SignUpForm> {
       print('Full Name: ${_fullNameController.text.trim()}');
       print('Telephone: ${_telephoneController.text.trim()}');
       print('Email: ${_emailController.text.trim()}');
+      print('Role: ${_roleController.text.trim()}');
+      print('Driver: ${_driverController.text.trim()}');
 
       // Hash password
       final hashedPassword = _hashPassword(_passwordController.text);
-      
+
       // Log hashed password (be cautious with logging actual hashes in production)
       print('Password Hashed:');
       print('Hash Length: ${hashedPassword.length}');
@@ -123,7 +157,7 @@ class _SignUpFormState extends State<SignUpForm> {
 
       // Attempt Supabase insertion with detailed logging
       print('Attempting Supabase Insertion');
-      
+
       final response = await Supabase.instance.client
           .from('users')
           .insert({
@@ -131,6 +165,8 @@ class _SignUpFormState extends State<SignUpForm> {
             'telephone': _telephoneController.text.trim(),
             'email': _emailController.text.trim(),
             'password_hash': hashedPassword,
+            'role': _roleController.text.trim(),
+            'driver': _driverController.text.trim(),
           })
           .select();
 
@@ -146,7 +182,6 @@ class _SignUpFormState extends State<SignUpForm> {
 
       // Navigate to login page
       Navigator.pushReplacementNamed(context, '/login');
-
     } on PostgrestException catch (error) {
       // Detailed Supabase error logging
       print('Supabase Registration Error:');
@@ -158,7 +193,6 @@ class _SignUpFormState extends State<SignUpForm> {
       setState(() {
         _errorMessage = _mapSupabaseError(error);
       });
-
     } catch (error, stackTrace) {
       // Comprehensive unexpected error logging
       print('Unexpected Registration Error:');
@@ -170,14 +204,13 @@ class _SignUpFormState extends State<SignUpForm> {
       setState(() {
         _errorMessage = 'An unexpected error occurred. Please try again.';
       });
-
     } finally {
       // Ensure loading state is always turned off
       setState(() {
         _isLoading = false;
       });
 
-      // Log end of registration process  
+      // Log end of registration process
       print('===== REGISTRATION PROCESS COMPLETED =====');
     }
   }
@@ -226,6 +259,10 @@ class _SignUpFormState extends State<SignUpForm> {
             _buildTextField('Password', _passwordController, obscureText: true),
             const SizedBox(height: 10),
             _buildTextField('Confirm Password', _confirmPasswordController, obscureText: true),
+            const SizedBox(height: 10),
+            _buildAutocompleteField('Role', _roleController, _filteredRoles, _filterRoles),
+            const SizedBox(height: 10),
+            _buildAutocompleteField('Driver', _driverController, _filteredDrivers, _filterDrivers),
             const SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -283,7 +320,7 @@ class _SignUpFormState extends State<SignUpForm> {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      decoration: InputDecoration( 
+      decoration: InputDecoration(
         hintText: hintText,
         hintStyle: const TextStyle(color: Colors.white),
         enabledBorder: UnderlineInputBorder(
@@ -294,6 +331,43 @@ class _SignUpFormState extends State<SignUpForm> {
         ),
       ),
       style: const TextStyle(color: Colors.white),
+    );
+  }
+
+  Widget _buildAutocompleteField(
+    String hintText,
+    TextEditingController controller,
+    List<String> options,
+    void Function(String) onChanged,
+  ) {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return const Iterable<String>.empty();
+        }
+        return options.where((option) => option.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+      },
+      onSelected: (String selection) {
+        controller.text = selection;
+      },
+      fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+        return TextField(
+          controller: controller,
+          focusNode: focusNode,
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: const TextStyle(color: Colors.white),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey[400]!),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.white),
+            ),
+          ),
+          style: const TextStyle(color: Colors.white),
+        );
+      },
     );
   }
 
