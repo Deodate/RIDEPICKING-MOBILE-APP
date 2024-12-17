@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/main.dart';
+import 'package:pickride/ui/onboarding_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:pickride/ui/onboarding_screen.dart'; // Adjust import as needed
 
 class DriverDashboard extends StatelessWidget {
   const DriverDashboard({super.key});
@@ -124,66 +125,54 @@ class DriverDashboardContent extends StatelessWidget {
 class DriverDrawer extends StatelessWidget {
   const DriverDrawer({super.key});
 
-  Future<void> _handleLogout(BuildContext context) async {
-    try {
-      bool? shouldLogout = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Confirm Logout'),
-            content: const Text('Are you sure you want to logout?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+ Future<void> _handleLogout(BuildContext context) async {
+  try {
+    bool? shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Logout',
+                style: TextStyle(color: Colors.red),
               ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text(
-                  'Logout',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
-          );
-        },
-      );
+            ),
+          ],
+        );
+      },
+    );
 
-      if (shouldLogout != true) return;
+    if (shouldLogout != true) return;
 
-      // Perform logout
-      await Supabase.instance.client.auth.signOut();
+    // Perform logout
+    await Supabase.instance.client.auth.signOut();
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Logged out successfully',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+    // Navigate to the OnboardingScreen and remove all previous routes
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const OnboardingScreen()), 
+      (route) => false
+    );
+  } catch (error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Error during logout: ${error.toString()}',
+          style: const TextStyle(color: Colors.white),
         ),
-      );
-
-      // Navigate to onboarding screen and clear navigation stack
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-        (route) => false,
-      );
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Error during logout. Please try again.',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
