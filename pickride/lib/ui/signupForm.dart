@@ -53,6 +53,20 @@ class _SignUpFormState extends State<SignUpForm> {
     return digest.toString();
   }
 
+  // New method to validate full name
+  bool _isValidFullName(String fullName) {
+    // Check if the full name contains exactly two words
+    final parts = fullName.split(' ');
+    
+    // Ensure there are exactly two names
+    if (parts.length != 2) {
+      return false;
+    }
+    
+    // Check that both names contain only alphabetic characters
+    return parts.every((name) => RegExp(r'^[a-zA-Z]+$').hasMatch(name));
+  }
+
   bool _validateForm() {
     if (_fullNameController.text.trim().isEmpty ||
         _telephoneController.text.trim().isEmpty ||
@@ -61,6 +75,12 @@ class _SignUpFormState extends State<SignUpForm> {
         _confirmPasswordController.text.trim().isEmpty ||
         _roleController.text.trim().isEmpty) {
       setState(() => _errorMessage = 'All fields are required');
+      return false;
+    }
+
+    // New full name validation
+    if (!_isValidFullName(_fullNameController.text.trim())) {
+      setState(() => _errorMessage = 'Full name must contain two names with only alphabetic characters');
       return false;
     }
 
@@ -80,7 +100,8 @@ class _SignUpFormState extends State<SignUpForm> {
     }
 
     if (_passwordController.text.length < 8) {
-      setState(() => _errorMessage = 'Password must be at least 8 characters long');
+      setState(
+          () => _errorMessage = 'Password must be at least 8 characters long');
       return false;
     }
 
@@ -89,13 +110,17 @@ class _SignUpFormState extends State<SignUpForm> {
 
   void _filterRoles(String value) {
     setState(() {
-      _filteredRoles = _roles.where((role) => role.toLowerCase().contains(value.toLowerCase())).toList();
+      _filteredRoles = _roles
+          .where((role) => role.toLowerCase().contains(value.toLowerCase()))
+          .toList();
     });
   }
 
   void _filterDrivers(String value) {
     setState(() {
-      _filteredDrivers = _drivers.where((driver) => driver.toLowerCase().contains(value.toLowerCase())).toList();
+      _filteredDrivers = _drivers
+          .where((driver) => driver.toLowerCase().contains(value.toLowerCase()))
+          .toList();
     });
   }
 
@@ -110,86 +135,89 @@ class _SignUpFormState extends State<SignUpForm> {
     }
   }
 
- Future<void> _registerUser() async {
-  // Log the start of the registration process
-  print('===== REGISTRATION PROCESS STARTED =====');
+  Future<void> _registerUser() async {
+    // Log the start of the registration process
+    print('===== REGISTRATION PROCESS STARTED =====');
 
-  // Form validation
-  if (!_validateForm()) {
-    print('Form Validation Failed');
-    return;
+    // Form validation
+    if (!_validateForm()) {
+      print('Form Validation Failed');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      // Hash password
+      final hashedPassword = _hashPassword(_passwordController.text);
+
+      // Prepare user data for insertion
+      final userData = {
+        'full_name': _fullNameController.text.trim(),
+        'telephone': _telephoneController.text.trim(),
+        'email': _emailController.text.trim(),
+        'password_hash': hashedPassword,
+        'role': _roleController.text.trim(),
+        // Optional: Add driver information if role is 'Driver'
+        // 'assigned_driver': _roleController.text.trim() == 'Driver'
+        //     ? _driverController.text.trim()
+        //     : null,
+        // Optional: Add timestamp of registration
+        'created_at': DateTime.now().toIso8601String(),
+      };
+
+      // Attempt Supabase insertion
+      final response = await Supabase.instance.client
+          .from('users')
+          .insert(userData)
+          .select();
+
+      // Log successful registration details
+      print('Registration Successful');
+      print('Inserted User Data: $userData');
+
+      // Show success snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registration Successful!'),
+          backgroundColor: Colors.green, // Set the background color to green
+        ),
+      );
+
+      // Navigate to login page
+      Navigator.pushReplacementNamed(context, '/login');
+    } on PostgrestException catch (error) {
+      // Detailed Supabase error logging
+      print('Supabase Registration Error:');
+      print('Error Code: ${error.code}');
+      print('Error Message: ${error.message}');
+
+      // Set user-friendly error message
+      setState(() {
+        _errorMessage = _mapSupabaseError(error);
+      });
+    } catch (error, stackTrace) {
+      // Comprehensive unexpected error logging
+      print('Unexpected Registration Error:');
+      print('Error Details: ${error.toString()}');
+
+      // Set generic error message
+      setState(() {
+        _errorMessage = 'An unexpected error occurred. Please try again.';
+      });
+    } finally {
+      // Ensure loading state is always turned off
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Log end of registration process
+      print('===== REGISTRATION PROCESS COMPLETED =====');
+    }
   }
-
-  setState(() {
-    _isLoading = true;
-    _errorMessage = '';
-  });
-
-  try {
-    // Hash password
-    final hashedPassword = _hashPassword(_passwordController.text);
-
-    // Prepare user data for insertion
-    final userData = {
-      'full_name': _fullNameController.text.trim(),
-      'telephone': _telephoneController.text.trim(),
-      'email': _emailController.text.trim(),
-      'password_hash': hashedPassword,
-      'role': _roleController.text.trim(),
-      // Optional: Add driver information if role is 'Driver'
-      // 'assigned_driver': _roleController.text.trim() == 'Driver' 
-      //     ? _driverController.text.trim() 
-      //     : null,
-      // Optional: Add timestamp of registration
-      'created_at': DateTime.now().toIso8601String(),
-    };
-
-    // Attempt Supabase insertion
-    final response = await Supabase.instance.client
-        .from('users')
-        .insert(userData)
-        .select();
-
-    // Log successful registration details
-    print('Registration Successful');
-    print('Inserted User Data: $userData');
-
-    // Show success snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Registration Successful!')),
-    );
-
-    // Navigate to login page
-    Navigator.pushReplacementNamed(context, '/login');
-  } on PostgrestException catch (error) {
-    // Detailed Supabase error logging
-    print('Supabase Registration Error:');
-    print('Error Code: ${error.code}');
-    print('Error Message: ${error.message}');
-
-    // Set user-friendly error message
-    setState(() {
-      _errorMessage = _mapSupabaseError(error);
-    });
-  } catch (error, stackTrace) {
-    // Comprehensive unexpected error logging
-    print('Unexpected Registration Error:');
-    print('Error Details: ${error.toString()}');
-
-    // Set generic error message
-    setState(() {
-      _errorMessage = 'An unexpected error occurred. Please try again.';
-    });
-  } finally {
-    // Ensure loading state is always turned off
-    setState(() {
-      _isLoading = false;
-    });
-
-    // Log end of registration process
-    print('===== REGISTRATION PROCESS COMPLETED =====');
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -228,15 +256,19 @@ class _SignUpFormState extends State<SignUpForm> {
               ),
             _buildTextField('Full Name', _fullNameController),
             const SizedBox(height: 10),
-            _buildTextField('Telephone', _telephoneController, keyboardType: TextInputType.phone),
+            _buildTextField('Telephone', _telephoneController,
+                keyboardType: TextInputType.phone),
             const SizedBox(height: 10),
-            _buildTextField('Email Address', _emailController, keyboardType: TextInputType.emailAddress),
-             const SizedBox(height: 10),
-            _buildAutocompleteField('Role', _roleController, _filteredRoles, _filterRoles),
+            _buildTextField('Email Address', _emailController,
+                keyboardType: TextInputType.emailAddress),
+            const SizedBox(height: 10),
+            _buildAutocompleteField(
+                'Role', _roleController, _filteredRoles, _filterRoles),
             const SizedBox(height: 10),
             _buildTextField('Password', _passwordController, obscureText: true),
             const SizedBox(height: 10),
-            _buildTextField('Confirm Password', _confirmPasswordController, obscureText: true),
+            _buildTextField('Confirm Password', _confirmPasswordController,
+                obscureText: true),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -276,8 +308,10 @@ class _SignUpFormState extends State<SignUpForm> {
               ],
             ),
             const SizedBox(height: 73),
-            const Text('Joyce Mutoni', style: TextStyle(color: Colors.white, fontSize: 16)),
-            const Text('@2024', style: TextStyle(color: Colors.white54, fontSize: 12)),
+            const Text('Joyce Mutoni',
+                style: TextStyle(color: Colors.white, fontSize: 16)),
+            const Text('@2024',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
           ],
         ),
       ),
@@ -319,7 +353,8 @@ class _SignUpFormState extends State<SignUpForm> {
         if (textEditingValue.text.isEmpty) {
           return const Iterable<String>.empty();
         }
-        return options.where((option) => option.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+        return options.where((option) =>
+            option.toLowerCase().contains(textEditingValue.text.toLowerCase()));
       },
       onSelected: (String selection) {
         controller.text = selection;
@@ -363,7 +398,8 @@ class _SignUpFormState extends State<SignUpForm> {
         ),
         child: _isLoading && text == 'Submit'
             ? const CircularProgressIndicator(color: Colors.white)
-            : Text(text, style: const TextStyle(fontSize: 18, color: Colors.white)),
+            : Text(text,
+                style: const TextStyle(fontSize: 18, color: Colors.white)),
       ),
     );
   }
