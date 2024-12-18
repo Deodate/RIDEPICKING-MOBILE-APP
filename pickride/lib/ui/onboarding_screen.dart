@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/ui/login.dart';
+import 'package:pickride/ui/signupForm.dart';
+import 'package:pickride/ui/order.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -19,8 +22,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       drawer: Drawer(
         child: SizedBox(
-          width: MediaQuery.of(context).size.width *
-              0.6, // Reduce width to 90% of the screen
+          width: MediaQuery.of(context).size.width * 0.6, // Reduce width to 90% of the screen
           child: ListView(
             padding: EdgeInsets.zero,
             children: <Widget>[
@@ -37,24 +39,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 leading: const Icon(Icons.home),
                 title: const Text('Home'),
                 onTap: () {
-                  // Navigate to the Home page using a named route
-                  Navigator.popAndPushNamed(context, '/');
+                  // Already on home screen, just close the drawer
+                  Navigator.of(context).pop();
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.person_add),
                 title: const Text('Sign up'),
                 onTap: () {
-                  // Navigate to the SignUp page using a named route
-                  Navigator.popAndPushNamed(context, '/signup');
+                  // Close drawer first
+                  Navigator.of(context).pop();
+                  // Navigate to SignUp page using MaterialPageRoute
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => const SignUpForm())
+                  );
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.login),
                 title: const Text('Login'),
                 onTap: () {
-                  // Navigate to the Login page using a named route
-                  Navigator.popAndPushNamed(context, '/login');
+                  // Close drawer first
+                  Navigator.of(context).pop();
+                  // Navigate to Login page using MaterialPageRoute
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => const LoginForm())
+                  );
                 },
               ),
             ],
@@ -97,8 +109,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
             onPressed: () {
-              // Navigate to the Order page using a direct route
-              Navigator.pushNamed(context, '/order');
+              // Navigate to the Order page using MaterialPageRoute
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (context) => OrderForm())
+              );
             },
             child: const Text(
               'Order Now',

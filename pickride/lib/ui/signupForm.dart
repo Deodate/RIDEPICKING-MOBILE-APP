@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:pickride/ui/login.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 
@@ -57,12 +58,12 @@ class _SignUpFormState extends State<SignUpForm> {
   bool _isValidFullName(String fullName) {
     // Check if the full name contains exactly two words
     final parts = fullName.split(' ');
-    
+
     // Ensure there are exactly two names
     if (parts.length != 2) {
       return false;
     }
-    
+
     // Check that both names contain only alphabetic characters
     return parts.every((name) => RegExp(r'^[a-zA-Z]+$').hasMatch(name));
   }
@@ -80,7 +81,8 @@ class _SignUpFormState extends State<SignUpForm> {
 
     // New full name validation
     if (!_isValidFullName(_fullNameController.text.trim())) {
-      setState(() => _errorMessage = 'Full name must contain two names with only alphabetic characters');
+      setState(() => _errorMessage =
+          'Full name must contain two names with only alphabetic characters');
       return false;
     }
 
@@ -295,7 +297,10 @@ class _SignUpFormState extends State<SignUpForm> {
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
                 GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/login'),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const LoginForm())),
                   child: const Text(
                     'Login',
                     style: TextStyle(

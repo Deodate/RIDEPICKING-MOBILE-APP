@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginForm(),
         '/signup': (context) => const SignUpForm(),
         '/order': (context) => OrderForm(),
-        '/driver-dashboard': (context) => const DriverDashboard(), // Add driver dashboard route
+        '/driver-dashboard': (context) => const DriverDashboard(),
       },
       onGenerateRoute: (settings) {
         // Handle specific named routes

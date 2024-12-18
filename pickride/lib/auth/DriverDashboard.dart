@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pickride/main.dart';
 import 'package:pickride/ui/onboarding_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -125,7 +124,7 @@ class DriverDashboardContent extends StatelessWidget {
 class DriverDrawer extends StatelessWidget {
   const DriverDrawer({super.key});
 
- Future<void> _handleLogout(BuildContext context) async {
+Future<void> _handleLogout(BuildContext context) async {
   try {
     bool? shouldLogout = await showDialog<bool>(
       context: context,
@@ -155,10 +154,10 @@ class DriverDrawer extends StatelessWidget {
     // Perform logout
     await Supabase.instance.client.auth.signOut();
 
-    // Navigate to the OnboardingScreen and remove all previous routes
+    // Manually navigate to OnboardingScreen
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const OnboardingScreen()), 
-      (route) => false
+      (Route<dynamic> route) => false
     );
   } catch (error) {
     ScaffoldMessenger.of(context).showSnackBar(
