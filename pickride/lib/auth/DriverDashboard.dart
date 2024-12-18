@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/auth/BookingsDriver.dart';
 import 'package:pickride/ui/onboarding_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,8 +11,8 @@ class DriverDashboard extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        drawer: DriverDrawer(),
-        body: DriverDashboardContent(),
+        drawer: const DriverDrawer(),
+        body: const DriverDashboardContent(),
       ),
     );
   }
@@ -81,9 +82,8 @@ class DriverDashboardContent extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: Add specific driver actions
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Driver functionality coming soon')),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => BookingsDriver()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -124,54 +124,54 @@ class DriverDashboardContent extends StatelessWidget {
 class DriverDrawer extends StatelessWidget {
   const DriverDrawer({super.key});
 
-Future<void> _handleLogout(BuildContext context) async {
-  try {
-    bool? shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Logout'),
-          content: const Text('Are you sure you want to logout?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Logout',
-                style: TextStyle(color: Colors.red),
+  Future<void> _handleLogout(BuildContext context) async {
+    try {
+      bool? shouldLogout = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to logout?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
               ),
-            ),
-          ],
-        );
-      },
-    );
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          );
+        },
+      );
 
-    if (shouldLogout != true) return;
+      if (shouldLogout != true) return;
 
-    // Perform logout
-    await Supabase.instance.client.auth.signOut();
+      // Perform logout
+      await Supabase.instance.client.auth.signOut();
 
-    // Manually navigate to OnboardingScreen
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const OnboardingScreen()), 
-      (Route<dynamic> route) => false
-    );
-  } catch (error) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Error during logout: ${error.toString()}',
-          style: const TextStyle(color: Colors.white),
+      // Navigate to OnboardingScreen
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        (Route<dynamic> route) => false,
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error during logout: ${error.toString()}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
         ),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -193,27 +193,25 @@ Future<void> _handleLogout(BuildContext context) async {
             ),
           ),
           ListTile(
-            leading: Icon(Icons.drive_eta, color: Colors.green),
+            leading: const Icon(Icons.drive_eta, color: Colors.green),
             title: const Text('My Rides'),
             onTap: () {
-              // TODO: Implement rides view
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Rides view coming soon')),
               );
             },
           ),
           ListTile(
-            leading: Icon(Icons.person, color: Colors.green),
+            leading: const Icon(Icons.person, color: Colors.green),
             title: const Text('Profile'),
             onTap: () {
-              // TODO: Implement profile view
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Profile view coming soon')),
               );
             },
           ),
           ListTile(
-            leading: Icon(Icons.logout, color: Colors.red),
+            leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text(
               'Logout',
               style: TextStyle(color: Colors.red),
