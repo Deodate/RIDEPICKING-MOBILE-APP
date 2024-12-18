@@ -65,6 +65,7 @@ class _OrderFormState extends State<OrderForm> {
     final destination = _destinationController.text.trim();
     final bookingTime = _selectedTime;
     final cost = double.tryParse(_costController.text.replaceAll(' RWF', ''));
+     final carType = _selectedCarType;
 
     if (fullName.isEmpty || phoneNumber.isEmpty || bookingTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -87,6 +88,7 @@ class _OrderFormState extends State<OrderForm> {
         'booking_date': bookingDate?.toIso8601String(),
         'destination': destination,
         'cost': cost,
+        'car_type': carType,
       });
 
       if (mounted) {
@@ -361,21 +363,30 @@ class _OrderFormState extends State<OrderForm> {
     );
   }
 
-  Widget _buildCarTypeDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _selectedCarType,
-      hint: const Text(
-        'Select Car Type', // Placeholder text
-        style: TextStyle(
-            color: Colors.white), // Set the placeholder text color to white
-      ),
-      items: _carTypes
-          .map((carType) =>
-              DropdownMenuItem(value: carType, child: Text(carType)))
-          .toList(),
-      onChanged: (newValue) => setState(() => _selectedCarType = newValue),
-    );
-  }
+Widget _buildCarTypeDropdown() {
+  return DropdownButtonFormField<String>(
+    value: _selectedCarType,
+    decoration: const InputDecoration(
+      errorStyle: TextStyle(color: Colors.red),
+    ),
+    hint: const Text(
+      'Select Car Type',
+      style: TextStyle(color: Colors.white),
+    ),
+    items: _carTypes
+        .map((carType) =>
+            DropdownMenuItem(value: carType, child: Text(carType)))
+        .toList(),
+    onChanged: (newValue) => setState(() => _selectedCarType = newValue),
+    validator: (value) {
+      if (value == null) {
+        return 'Please select a car type';
+      }
+      return null;
+    },
+    autovalidateMode: AutovalidateMode.onUserInteraction,
+  );
+}
 
   Widget _buildDropdownTimePicker() {
     List<String> times = List.generate(48, (index) {

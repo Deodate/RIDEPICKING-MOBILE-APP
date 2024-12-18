@@ -16,6 +16,7 @@ class Booking {
   String date;
   String time;
   String destination;
+  String car_type;
   String status;
 
   Booking({
@@ -23,6 +24,7 @@ class Booking {
     required this.fullName,
     required this.date,
     required this.time,
+     required this.car_type,
     required this.destination,
     String? status,
   }) : status = status ?? 'Pending';
@@ -33,6 +35,7 @@ class Booking {
       fullName: json['full_name'] ?? '',
       date: json['booking_date'] ?? '',
       time: json['booking_time'] ?? '',
+      car_type: json['car_type'] ?? '',
       destination: json['destination'] ?? '',
       status: json['status'] ?? 'Pending',
     );
@@ -192,6 +195,7 @@ class _BookingsDriverState extends State<BookingsDriver> {
                                 DataColumn(label: Text('Date')),
                                 DataColumn(label: Text('Time')),
                                 DataColumn(label: Text('Destination')),
+                                DataColumn(label: Text('Car Type')),
                                 DataColumn(label: Text('Booking')),
                               ],
                               rows: _getPaginatedBookings().asMap().entries.map((entry) {
@@ -203,6 +207,7 @@ class _BookingsDriverState extends State<BookingsDriver> {
                                   DataCell(Text(booking.date)),
                                   DataCell(Text(booking.time)),
                                   DataCell(Text(booking.destination)),
+                                  DataCell(Text(booking.car_type)),
                                   DataCell(Text(booking.status)),
                                 ]);
                               }).toList(),
