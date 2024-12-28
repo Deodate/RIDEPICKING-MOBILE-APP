@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/auth/BookingService.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -20,6 +21,8 @@ class Booking {
   String destination;
   String cost;
   String status;
+  String? assignedDriverId;
+  String? assignedDriverName;
 
   Booking({
     required this.id,
@@ -31,6 +34,8 @@ class Booking {
     required this.destination,
     required this.cost,
     String? status,
+    this.assignedDriverId,
+    this.assignedDriverName,
   }) : status = status ?? 'Pending';
 
   factory Booking.fromJson(Map<String, dynamic> json) {
@@ -43,7 +48,9 @@ class Booking {
       time: json['booking_time'] ?? '',
       destination: json['destination'] ?? '',
       cost: (json['cost'] ?? 0.0).toString(),
-      status: json['status'] ?? 'Pending',  // Fetch status from database
+      status: json['status'] ?? 'Pending',
+      assignedDriverId: json['assigned_driver_id'],
+      assignedDriverName: json['assigned_driver_name'],
     );
   }
 
@@ -79,53 +86,55 @@ class _BookingListScreenState extends State<BookingListScreen> {
     super.initState();
     _fetchBookings();
   }
-Future<void> _fetchBookings() async {
-  try {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
 
-    // Fetch bookings from Supabase
-    final response = await _supabase.from('bookings').select();
+  Future<void> _fetchBookings() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
 
-    final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
+      // Fetch bookings from Supabase
+      final response = await _supabase.from('bookings').select();
 
-    final List<Booking> fetchedBookings = data.map((booking) {
-      return Booking.fromJson(booking);
-    }).toList();
+      final List<Map<String, dynamic>> data =
+          List<Map<String, dynamic>>.from(response);
 
-    // Get the current date in the format used by the bookings (assuming it's 'yyyy-MM-dd')
-    final currentDate = DateTime.now();
+      final List<Booking> fetchedBookings = data.map((booking) {
+        return Booking.fromJson(booking);
+      }).toList();
 
-    // Sort the bookings by date, placing the current date first
-    fetchedBookings.sort((a, b) {
-      final dateA = DateTime.parse(a.date);
-      final dateB = DateTime.parse(b.date);
+      // Get the current date in the format used by the bookings (assuming it's 'yyyy-MM-dd')
+      final currentDate = DateTime.now();
 
-      // Place current date at the start
-      if (dateA.isAtSameMomentAs(currentDate)) {
-        return -1; // current date should come first
-      } else if (dateB.isAtSameMomentAs(currentDate)) {
-        return 1;
-      }
+      // Sort the bookings by date, placing the current date first
+      fetchedBookings.sort((a, b) {
+        final dateA = DateTime.parse(a.date);
+        final dateB = DateTime.parse(b.date);
 
-      // Otherwise, order by date
-      return dateA.compareTo(dateB);
-    });
+        // Place current date at the start
+        if (dateA.isAtSameMomentAs(currentDate)) {
+          return -1; // current date should come first
+        } else if (dateB.isAtSameMomentAs(currentDate)) {
+          return 1;
+        }
 
-    setState(() {
-      _bookings = fetchedBookings;
-      _filteredBookings = fetchedBookings;
-      _isLoading = false;
-    });
-  } catch (error) {
-    setState(() {
-      _error = 'Failed to fetch bookings: ${error.toString()}';
-      _isLoading = false;
-    });
+        // Otherwise, order by date
+        return dateA.compareTo(dateB);
+      });
+
+      setState(() {
+        _bookings = fetchedBookings;
+        _filteredBookings = fetchedBookings;
+        _isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        _error = 'Failed to fetch bookings: ${error.toString()}';
+        _isLoading = false;
+      });
+    }
   }
-}
 
   void _filterBookings(String query) {
     setState(() {
@@ -140,16 +149,11 @@ Future<void> _fetchBookings() async {
     });
   }
 
-  // void _updateStatus(int index) {
-  //   setState(() {
-  //     _filteredBookings[index].toggleStatus();
-  //   });
-
   void _updateStatus(int index) async {
     try {
       final booking = _filteredBookings[index];
       String newStatus;
-      
+
       // Determine new status
       if (booking.status == 'Pending') {
         newStatus = 'Confirmed';
@@ -159,11 +163,11 @@ Future<void> _fetchBookings() async {
         newStatus = 'Pending';
       }
 
-      // Update in Supabase
-      await _supabase
-          .from('bookings')
-          .update({'status': newStatus})
-          .eq('id', booking.id);
+      // Create instance of BookingService
+      final bookingService = BookingService();
+
+      // Update status and trigger auto-assignment if confirmed
+      await bookingService.updateStatus(booking.id, newStatus);
 
       // Update local state
       setState(() {
@@ -189,9 +193,7 @@ Future<void> _fetchBookings() async {
           margin: const EdgeInsets.all(10),
         ),
       );
-
     } catch (error) {
-      // Show error message if update fails
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to update status: ${error.toString()}'),
@@ -202,47 +204,6 @@ Future<void> _fetchBookings() async {
         ),
       );
     }
-  
-
-    final booking = _filteredBookings[index];
-    Color bgColor;
-
-    if (booking.status == 'Confirmed') {
-      bgColor = Colors.green;
-    } else if (booking.status == 'Canceled') {
-      bgColor = Colors.red;
-    } else {
-      bgColor = Colors.blue;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: 'Booking for ',
-                style: TextStyle(color: Colors.white), // Default color
-              ),
-              TextSpan(
-                text: booking.fullName,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black), // Bold and black color
-              ),
-              TextSpan(
-                text: ' is now ${booking.status}!',
-                style: TextStyle(color: Colors.white), // Default color
-              ),
-            ],
-          ),
-        ),
-        backgroundColor: bgColor,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(10),
-      ),
-    );
   }
 
   @override
