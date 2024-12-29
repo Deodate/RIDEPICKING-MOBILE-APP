@@ -2,75 +2,67 @@ import 'package:flutter/material.dart';
 import 'package:pickride/ui/onboarding_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class Booking {
+class Driver {
   String id;
-  String passengerId;
-  String passengerName;
-  String pickupLocation;
+  String fullName;
+  String phoneNumber;
+  String date;
+  String time;
   String destination;
-  String pickupTime;
   String status;
-  String carModel;
-  
-  Booking({
-    required this.id,
-    required this.passengerId,
-    required this.passengerName,
-    required this.pickupLocation,
-    required this.destination,
-    required this.pickupTime,
-    required this.status,
-    required this.carModel,
-  });
+  String? assignedDriverId;
+  String? assignedDriverName;
 
-  factory Booking.fromJson(Map<String, dynamic> json) {
-    final users = json['users'] as Map<String, dynamic>?;
-    final cars = json['cars'] as Map<String, dynamic>?;
-    
-    return Booking(
+  Driver({
+    required this.id,
+    required this.fullName,
+    required this.phoneNumber,
+    required this.date,
+    required this.time,
+    required this.destination,
+    String? status,
+    this.assignedDriverId,
+    this.assignedDriverName,
+  }) : status = status ?? 'Pending';
+
+  factory Driver.fromJson(Map<String, dynamic> json) {
+    return Driver(
       id: json['id'] ?? '',
-      passengerId: json['passenger_id'] ?? '',
-      passengerName: users?['full_name'] ?? 'Unknown',
-      pickupLocation: json['pickup_location'] ?? '',
+      fullName: json['full_name'] ?? '',
+      phoneNumber: json['phone_number'] ?? '',
+      date: json['booking_date'] ?? '',
+      time: json['booking_time'] ?? '',
       destination: json['destination'] ?? '',
-      pickupTime: json['pickup_time']?.toString() ?? '',
       status: json['status'] ?? 'Pending',
-      carModel: cars?['model'] ?? 'Unknown',
+      assignedDriverId: json['assigned_driver_id'],
+      assignedDriverName: json['assigned_driver_name'],
     );
   }
 }
 
-class NotificationService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+class DriverUser {
+  String id;
+  String fullName;
+  String telephone;
+  bool isAvailable;
+  int currentBookings;
 
-  Future<List<Map<String, dynamic>>> getDriverNotifications() async {
-    try {
-      final user = _supabase.auth.currentUser;
-      if (user == null) return [];
+  DriverUser({
+    required this.id,
+    required this.fullName,
+    required this.telephone,
+    this.isAvailable = true,
+    this.currentBookings = 0,
+  });
 
-      final response = await _supabase
-          .from('driver_notifications')
-          .select('*, bookings(*)')
-          .eq('driver_id', user.id)
-          .order('created_at', ascending: false);
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (error) {
-      print('Error fetching notifications: $error');
-      return [];
-    }
-  }
-
-  Future<void> markNotificationAsRead(String notificationId) async {
-    try {
-      await _supabase
-          .from('driver_notifications')
-          .update({'is_read': true})
-          .eq('id', notificationId);
-    } catch (error) {
-      print('Error marking notification as read: $error');
-      throw Exception('Failed to mark notification as read');
-    }
+  factory DriverUser.fromJson(Map<String, dynamic> json) {
+    return DriverUser(
+      id: json['id'] ?? '',
+      fullName: json['full_name'] ?? '',
+      telephone: json['telephone'] ?? '',
+      isAvailable: json['is_available'] ?? true,
+      currentBookings: json['current_bookings'] ?? 0,
+    );
   }
 }
 
@@ -82,134 +74,91 @@ class DriverDashboard extends StatefulWidget {
 }
 
 class _DriverDashboardState extends State<DriverDashboard> {
-  final NotificationService _notificationService = NotificationService();
   final SupabaseClient _supabase = Supabase.instance.client;
-  List<Map<String, dynamic>> _notifications = [];
-  List<Booking> _confirmedBookings = [];
-  bool _hasUnreadNotifications = false;
   bool _isLoading = true;
   String? _error;
+  List<Driver> _bookings = [];
+  List<Driver> _filteredBookings = [];
+  List<DriverUser> _availableDrivers = [];
+  String _searchQuery = '';
+  final ScrollController _horizontalScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
-    _setupRealtimeSubscription();
+    _initializeData();
   }
 
-  Future<void> _loadInitialData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    
+  Future<void> _initializeData() async {
     try {
       await Future.wait([
-        _loadNotifications(),
-        _fetchConfirmedBookings(),
+        _fetchAvailableDrivers(),
+        _fetchBookings(),
       ]);
-    } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _fetchConfirmedBookings() async {
-    try {
-      final user = _supabase.auth.currentUser;
-      if (user == null) {
-        print('No user logged in');
-        return;
-      }
-
-      print('Fetching bookings for driver: ${user.id}');
-
-      final response = await _supabase
-          .from('bookings')
-          .select('''
-            id,
-            passenger_id,
-            pickup_location,
-            destination,
-            pickup_time,
-            status,
-            cars (
-              id,
-              model
-            ),
-            users!bookings_passenger_id_fkey (
-              id,
-              full_name
-            )
-          ''')
-          .eq('assigned_driver_id', user.id)
-          .eq('status', 'Confirmed');
-
-      print('Fetched response: $response');
-
-      if (response == null) {
-        print('No response from database');
-        setState(() => _confirmedBookings = []);
-        return;
-      }
-
-      final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
-      final bookings = data.map((booking) => Booking.fromJson(booking)).toList();
-      
-      print('Parsed bookings: ${bookings.length}');
-
-      if (mounted) {
-        setState(() => _confirmedBookings = bookings);
-      }
+      await _assignDriversToBookings();
     } catch (error) {
-      print('Error in _fetchConfirmedBookings: $error');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading bookings: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      throw error;
-    }
-  }
-
-  Future<void> _loadNotifications() async {
-    final notifications = await _notificationService.getDriverNotifications();
-    if (mounted) {
       setState(() {
-        _notifications = notifications;
-        _hasUnreadNotifications =
-            notifications.any((n) => !(n['is_read'] as bool));
+        _error = 'Failed to initialize data: ${error.toString()}';
+        _isLoading = false;
       });
     }
   }
 
-  void _setupRealtimeSubscription() {
-    final user = _supabase.auth.currentUser;
-    if (user == null) return;
+  Future<void> _fetchAvailableDrivers() async {
+    try {
+      final response = await _supabase
+          .from('users')
+          .select()
+          .eq('role', 'Driver')
+          .eq('is_available', true);
 
-    _supabase
-        .from('bookings')
-        .stream(primaryKey: ['id'])
-        .eq('assigned_driver_id', user.id)
-        .listen((List<Map<String, dynamic>> data) {
-          if (mounted) {
-            _fetchConfirmedBookings();
-          }
-        });
+      final List<Map<String, dynamic>> data =
+          List<Map<String, dynamic>>.from(response);
 
-    _supabase
-        .from('driver_notifications')
-        .stream(primaryKey: ['id'])
-        .eq('driver_id', user.id)
-        .listen((List<Map<String, dynamic>> data) {
-          if (mounted) {
-            _loadNotifications();
-          }
-        });
+      setState(() {
+        _availableDrivers = data.map((user) => DriverUser.fromJson(user)).toList();
+      });
+    } catch (error) {
+      throw Exception('Failed to fetch drivers: ${error.toString()}');
+    }
+  }
+
+   Future<void> _fetchBookings() async {
+    try {
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .eq('status', 'Confirmed')
+          .filter('assigned_driver_id', 'is', null); 
+
+      final List<Map<String, dynamic>> data =
+          List<Map<String, dynamic>>.from(response);
+
+      final List<Driver> fetchedBookings = data.map((booking) {
+        return Driver.fromJson(booking);
+      }).toList();
+
+      setState(() {
+        _bookings = fetchedBookings;
+        _filteredBookings = fetchedBookings;
+      });
+    } catch (error) {
+      throw Exception('Failed to fetch bookings: ${error.toString()}');
+    }
+  }
+
+
+  void _filterBookings(String query) {
+    setState(() {
+      _searchQuery = query;
+      _filteredBookings = _bookings
+          .where((booking) =>
+              booking.id.toLowerCase().contains(query.toLowerCase()) ||
+              booking.fullName.toLowerCase().contains(query.toLowerCase()) ||
+              booking.destination.toLowerCase().contains(query.toLowerCase()) ||
+              booking.date.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
   }
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -259,225 +208,233 @@ class _DriverDashboardState extends State<DriverDashboard> {
     }
   }
 
-  Future<void> _showNotifications(BuildContext context) async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Notifications'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: _notifications.length,
-            itemBuilder: (context, index) {
-              final notification = _notifications[index];
-              final booking = notification['bookings'];
+  Future<void> _assignDriversToBookings() async {
+    try {
+      for (var booking in _bookings) {
+        // Find the most suitable driver (least number of current bookings)
+        if (_availableDrivers.isEmpty) continue;
+        
+        final availableDriver = _availableDrivers.reduce((curr, next) =>
+            curr.currentBookings <= next.currentBookings ? curr : next);
 
-              return ListTile(
-                title: Text(notification['message']),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (booking != null) ...[
-                      Text('Pickup: ${booking['pickup_location']}'),
-                      Text('Destination: ${booking['destination']}'),
-                      Text('Time: ${booking['pickup_time']}'),
-                    ],
-                    Text(
-                      DateTime.parse(notification['created_at'])
-                          .toLocal()
-                          .toString(),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
-                leading: Icon(
-                  Icons.circle,
-                  color: notification['is_read'] ? Colors.grey : Colors.green,
-                  size: 12,
-                ),
-                onTap: () async {
-                  if (!notification['is_read']) {
-                    await _notificationService
-                        .markNotificationAsRead(notification['id']);
-                    _loadNotifications();
-                  }
-                },
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
+        // Update booking with assigned driver
+        await _supabase.from('bookings').update({
+          'assigned_driver_id': availableDriver.id,
+          'assigned_driver_name': availableDriver.fullName,
+          'status': 'Assigned'
+        }).eq('id', booking.id);
+
+        // Update driver's booking count
+        await _supabase.from('users').update({
+          'current_bookings': availableDriver.currentBookings + 1,
+          'is_available': availableDriver.currentBookings + 1 < 3 // Limit to 3 bookings per driver
+        }).eq('id', availableDriver.id);
+
+        // Update local state
+        setState(() {
+          booking.assignedDriverId = availableDriver.id;
+          booking.assignedDriverName = availableDriver.fullName;
+          booking.status = 'Assigned';
+          
+          // Update driver's availability
+          availableDriver.currentBookings++;
+          availableDriver.isAvailable = availableDriver.currentBookings < 3;
+          
+          // Remove driver from available list if they've reached the limit
+          if (!availableDriver.isAvailable) {
+            _availableDrivers.remove(availableDriver);
+          }
+        });
+      }
+    } catch (error) {
+      throw Exception('Failed to assign drivers: ${error.toString()}');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A395D),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Container(
-              height: 100,
-              color: Colors.green,
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: const Text(
-                'Driver Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.drive_eta, color: Colors.green),
-              title: const Text('My Rides'),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Rides view coming soon')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person, color: Colors.green),
-              title: const Text('Profile'),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile view coming soon')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text(
-                'Logout',
-                style: TextStyle(color: Colors.red),
-              ),
-              onTap: () => _handleLogout(context),
-            ),
-          ],
-        ),
-      ),
       appBar: AppBar(
-        backgroundColor: Colors.green.shade300,
-        title: const Text('Driver Dashboard'),
+        automaticallyImplyLeading: false,
+        backgroundColor: const Color(0xFF0A395D),
+        leading: IconButton(
+          icon: const Icon(Icons.lock_outline, color: Colors.white),
+          onPressed: () => _handleLogout(context),
+        ),
+        title: const Text(
+          'BOOKING LIST',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
         actions: [
           Stack(
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () => _showNotifications(context),
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                onPressed: () {
+                  // Handle notification click
+                },
               ),
-              if (_hasUnreadNotifications)
+              if (_filteredBookings.isNotEmpty)
                 Positioned(
-                  right: 0,
-                  top: 0,
+                  right: 8,
+                  top: 8,
                   child: Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       color: Colors.red,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     constraints: const BoxConstraints(
-                      minWidth: 12,
-                      minHeight: 12,
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
+                    child: Text(
+                      '${_filteredBookings.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
             ],
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Error: $_error',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  ElevatedButton(
-                    onPressed: _loadInitialData,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            )
-          : Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.green.shade300, Colors.blueAccent.shade200],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Confirmed Bookings',
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Expanded(
-                      child: Card(
-                        margin: const EdgeInsets.all(16),
-                        child: _confirmedBookings.isEmpty
-                            ? const Center(
-                                child: Text('No confirmed bookings found'),
-                              )
-                            : SingleChildScrollView(
-                                child: PaginatedDataTable(
-                                  columns: const [
-                                    DataColumn(label: Text('Passenger')),
-                                    DataColumn(label: Text('Pickup')),
-                                    DataColumn(label: Text('Destination')),
-                                    DataColumn(label: Text('Time')),
-                                    DataColumn(label: Text('Car')),
-                                    DataColumn(label: Text('Status')),
-                                  ],
-                                  source: DriverBookingDataSource(_confirmedBookings),
-                                  rowsPerPage: 8,
-                                  showFirstLastButtons: true,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      body: _buildBody(),
     );
   }
 
-  @override
-  void dispose() {
-    _supabase.dispose();
-    super.dispose();
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(child: Text(_error!));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          _buildSearchBar(),
+          const SizedBox(height: 20),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              controller: _horizontalScrollController,
+              child: SizedBox(
+                width: 800,
+                child: PaginatedDataTable(
+                  headingRowColor: MaterialStateProperty.resolveWith(
+                      (states) => const Color(0xFFe2e3e5)),
+                  columns: const [
+                    DataColumn(
+                        label:
+                            Text('#', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Customer',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Phone',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label:
+                            Text('Date', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label:
+                            Text('Time', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Destination',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Assigned Driver',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Status',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                  ],
+                  source: BookingDataTableSource(_filteredBookings),
+                  rowsPerPage: 5,
+                  showCheckboxColumn: false,
+                  columnSpacing: 20,
+                  horizontalMargin: 10,
+                  header: Container(
+                    padding: const EdgeInsets.all(8.0),
+                    color: Colors.blue,
+                    child: const Text(
+                      'BOOKINGS WITH ASSIGNED DRIVERS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Joyce Mutoni\n©2024',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Color.fromARGB(179, 247, 5, 5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: SizedBox(
+        width: 200,
+        height: 40,
+        child: TextField(
+          onChanged: _filterBookings,
+          decoration: InputDecoration(
+            labelText: 'Search',
+            prefixIcon: const Icon(Icons.search),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8.0),
+              borderSide: const BorderSide(color: Colors.blue),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8.0),
+              borderSide: const BorderSide(color: Colors.blue),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 2, horizontal: 5),
+          ),
+          style: const TextStyle(fontSize: 12),
+        ),
+      ),
+    );
   }
 }
 
-class DriverBookingDataSource extends DataTableSource {
-  final List<Booking> bookings;
+class BookingDataTableSource extends DataTableSource {
+  final List<Driver> bookings;
 
-  DriverBookingDataSource(this.bookings);
+  BookingDataTableSource(this.bookings);
 
   @override
   DataRow? getRow(int index) {
@@ -486,17 +443,19 @@ class DriverBookingDataSource extends DataTableSource {
 
     return DataRow(
       cells: [
-        DataCell(Text(booking.passengerName)),
-        DataCell(Text(booking.pickupLocation)),
+        DataCell(Text('${index + 1}')),
+        DataCell(Text(booking.fullName)),
+        DataCell(Text(booking.phoneNumber)),
+        DataCell(Text(booking.date)),
+        DataCell(Text(booking.time)),
         DataCell(Text(booking.destination)),
-        DataCell(Text(booking.pickupTime)),
-        DataCell(Text(booking.carModel)),
+        DataCell(Text(booking.assignedDriverName ?? 'Not assigned')),
         DataCell(
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             decoration: BoxDecoration(
-              color: Colors.green,
-              borderRadius: BorderRadius.circular(12),
+              color: _getStatusColor(booking.status),
+              borderRadius: BorderRadius.circular(4.0),
             ),
             child: Text(
               booking.status,
@@ -506,6 +465,19 @@ class DriverBookingDataSource extends DataTableSource {
         ),
       ],
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'assigned':
+        return Colors.green;
+      case 'confirmed':
+        return Colors.blue;
+      case 'canceled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 
   @override
