@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pickride/ui/onboarding_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Main booking class for data structure
 class Booking {
   String id;
   String fullName;
@@ -35,12 +33,10 @@ class Booking {
   }
 }
 
-// DataTable source for displaying bookings
 class BookingDataTableSource extends DataTableSource {
   final List<Booking> bookings;
-  final Function(int) onStatusUpdate;
 
-  BookingDataTableSource(this.bookings, this.onStatusUpdate);
+  BookingDataTableSource(this.bookings);
 
   @override
   DataRow? getRow(int index) {
@@ -55,22 +51,19 @@ class BookingDataTableSource extends DataTableSource {
       DataCell(Text(booking.time)),
       DataCell(Text(booking.destination)),
       DataCell(
-        GestureDetector(
-          onTap: () => onStatusUpdate(index),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            decoration: BoxDecoration(
-              color: booking.status == 'Confirmed'
-                  ? Colors.green
-                  : booking.status == 'Canceled'
-                      ? Colors.red
-                      : Colors.blue,
-              borderRadius: BorderRadius.circular(4.0),
-            ),
-            child: Text(
-              booking.status,
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-            ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          decoration: BoxDecoration(
+            color: booking.status == 'Confirmed'
+                ? Colors.green
+                : booking.status == 'Canceled'
+                    ? Colors.red
+                    : Colors.blue,
+            borderRadius: BorderRadius.circular(4.0),
+          ),
+          child: Text(
+            booking.status,
+            style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
         ),
       ),
@@ -115,12 +108,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
       final response = await _supabase
           .from('bookings')
           .select()
-          .eq('status', 'Assigned');
+          .eq('status', 'Confirmed');
       
       final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
 
       setState(() {
-        _bookingsCount = data.length;  // Only counts Assigned bookings
+        _bookingsCount = data.length;
         _filteredBookings = data.map((booking) => Booking.fromJson(booking)).toList();
         _isLoading = false;
       });
@@ -140,34 +133,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
     });
   }
 
-  Future<void> _updateStatus(int index) async {
-    try {
-      final booking = _filteredBookings[index];
-      String newStatus = booking.status == 'Pending'
-          ? 'Confirmed'
-          : booking.status == 'Confirmed'
-              ? 'Canceled'
-              : 'Pending';
-
-      await _supabase
-          .from('bookings')
-          .update({'status': newStatus}).eq('id', booking.id);
-
-      setState(() {
-        booking.status = newStatus;
-      });
-
-      _fetchBookings();
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to update status: ${error.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -180,9 +145,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications),
-                onPressed: () {
-                  // Handle notification tap
-                },
+                onPressed: () {},
               ),
               if (_bookingsCount > 0)
                 Positioned(
@@ -231,10 +194,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                               DataColumn(label: Text('Destination')),
                               DataColumn(label: Text('Status')),
                             ],
-                            source: BookingDataTableSource(
-                              _filteredBookings,
-                              _updateStatus,
-                            ),
+                            source: BookingDataTableSource(_filteredBookings),
                             rowsPerPage: 5,
                           ),
                         ),
