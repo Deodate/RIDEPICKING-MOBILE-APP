@@ -24,9 +24,9 @@ class _SignUpFormState extends State<SignUpForm> {
   bool _isLoading = false;
   String _errorMessage = '';
 
-  List<String> _roles = ['Administration', 'Driver'];
+  final List<String> _roles = ['Administration', 'Driver'];
   List<String> _filteredRoles = [];
-  List<String> _drivers = ['John Doe', 'Jane Smith', 'Bob Johnson'];
+  final List<String> _drivers = ['John Doe', 'Jane Smith', 'Bob Johnson'];
   List<String> _filteredDrivers = [];
 
   @override
@@ -201,7 +201,7 @@ class _SignUpFormState extends State<SignUpForm> {
       setState(() {
         _errorMessage = _mapSupabaseError(error);
       });
-    } catch (error, stackTrace) {
+    } catch (error) {
       // Comprehensive unexpected error logging
       print('Unexpected Registration Error:');
       print('Error Details: ${error.toString()}');

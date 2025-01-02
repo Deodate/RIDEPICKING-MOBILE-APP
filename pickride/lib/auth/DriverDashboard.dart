@@ -338,7 +338,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
               child: SizedBox(
                 width: 800,
                 child: PaginatedDataTable(
-                  headingRowColor: MaterialStateProperty.resolveWith(
+                  headingRowColor: WidgetStateProperty.resolveWith(
                       (states) => const Color(0xFFe2e3e5)),
                   columns: const [
                     DataColumn(
