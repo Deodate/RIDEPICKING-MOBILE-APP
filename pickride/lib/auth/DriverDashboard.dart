@@ -34,59 +34,11 @@ class Booking {
   }
 }
 
-class BookingDataTableSource extends DataTableSource {
-  final List<Booking> bookings;
-
-  BookingDataTableSource(this.bookings);
-
-  @override
-  DataRow? getRow(int index) {
-    if (index >= bookings.length) return null;
-    final booking = bookings[index];
-
-    return DataRow(cells: [
-      DataCell(Text('${index + 1}')),
-      DataCell(Text(booking.fullName)),
-      DataCell(Text(booking.phoneNumber)),
-      DataCell(Text(booking.date)),
-      DataCell(Text(booking.time)),
-      DataCell(Text(booking.destination)),
-      DataCell(
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          decoration: BoxDecoration(
-            color: booking.status == 'Confirmed'
-                ? Colors.green
-                : booking.status == 'Canceled'
-                    ? Colors.red
-                    : Colors.blue,
-            borderRadius: BorderRadius.circular(4.0),
-          ),
-          child: Text(
-            booking.status,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
-          ),
-        ),
-      ),
-    ]);
-  }
-
-  @override
-  bool get isRowCountApproximate => false;
-
-  @override
-  int get rowCount => bookings.length;
-
-  @override
-  int get selectedRowCount => 0;
-}
-
 class DriverDashboard extends StatefulWidget {
   const DriverDashboard({super.key});
 
   @override
   _DriverDashboardState createState() => _DriverDashboardState();
-  
 }
 
 class _DriverDashboardState extends State<DriverDashboard> {
@@ -96,7 +48,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
   String? _error;
   int _bookingsCount = 0;
   bool _isLoggingOut = false;
-  
 
   @override
   void initState() {
@@ -108,17 +59,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
   Future<void> _fetchBookings() async {
     try {
       setState(() => _isLoading = true);
-
-      final response =
-          await _supabase.from('bookings').select().eq('status', 'Confirmed');
-
-      final List<Map<String, dynamic>> data =
-          List<Map<String, dynamic>>.from(response);
-
+      final response = await _supabase.from('bookings').select().eq('status', 'Confirmed');
+      final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
       setState(() {
         _bookingsCount = data.length;
-        _filteredBookings =
-            data.map((booking) => Booking.fromJson(booking)).toList();
+        _filteredBookings = data.map((booking) => Booking.fromJson(booking)).toList();
         _isLoading = false;
       });
     } catch (error) {
@@ -137,9 +82,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
     });
   }
 
- Future<void> _handleLogout() async {
+  Future<void> _handleLogout() async {
     setState(() => _isLoggingOut = true);
-    
     try {
       await _supabase.auth.signOut();
       if (mounted) {
@@ -156,13 +100,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
         );
       }
     }
-    
     setState(() => _isLoggingOut = false);
   }
 
-
   @override
-   Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A395D),
       appBar: AppBar(
@@ -192,53 +134,82 @@ class _DriverDashboardState extends State<DriverDashboard> {
                     ),
                     child: Text(
                       '$_bookingsCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
                       textAlign: TextAlign.center,
                     ),
                   ),
                 ),
             ],
           ),
-          _isLoggingOut 
-            ? const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: CircularProgressIndicator(color: Colors.white),
-              )
-            : IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: _handleLogout,
-              ),
+          _isLoggingOut
+              ? const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(color: Colors.white),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: _handleLogout,
+                ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(child: Text('Error: $_error'))
-              : SafeArea(
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: PaginatedDataTable(
-                            columns: const [
-                              DataColumn(label: Text('#')),
-                              DataColumn(label: Text('Names')),
-                              DataColumn(label: Text('Phone')),
-                              DataColumn(label: Text('Date')),
-                              DataColumn(label: Text('Time')),
-                              DataColumn(label: Text('Destination')),
-                              DataColumn(label: Text('Status')),
-                            ],
-                            source: BookingDataTableSource(_filteredBookings),
-                            rowsPerPage: 5,
-                          ),
+              : ListView.builder(
+                  itemCount: _filteredBookings.length,
+                  itemBuilder: (context, index) {
+                    final booking = _filteredBookings[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: ExpansionTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFE3F2FD),
+                          child: Icon(Icons.card_travel, color: Colors.blue),
                         ),
+                        title: Text(
+                          '${booking.destination} Trip',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text('${booking.date} - ${booking.time}'),
+                        children: [
+                          ListTile(
+                            title: const Text('Name'),
+                            subtitle: Text(booking.fullName),
+                          ),
+                          ListTile(
+                            title: const Text('Phone'),
+                            subtitle: Text(booking.phoneNumber),
+                          ),
+                          ListTile(
+                            title: const Text('Location'),
+                            subtitle: Text(booking.destination),
+                          ),
+                          ListTile(
+                            title: const Text('Status'),
+                            subtitle: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: booking.status == 'Confirmed'
+                                    ? Colors.green
+                                    : booking.status == 'Canceled'
+                                        ? Colors.red
+                                        : Colors.blue,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                booking.status,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
     );
   }
