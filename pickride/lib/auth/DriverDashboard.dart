@@ -20,7 +20,7 @@ class Booking {
     required this.time,
     required this.destination,
     String? status,
-     this.isRead = false,
+    this.isRead = false,
   }) : status = status ?? 'Pending';
 
   factory Booking.fromJson(Map<String, dynamic> json) {
@@ -32,7 +32,7 @@ class Booking {
       time: json['booking_time'] ?? '',
       destination: json['destination'] ?? '',
       status: json['status'] ?? 'Pending',
-       isRead: json['is_read'] ?? false,
+      isRead: json['is_read'] ?? false,
     );
   }
 }
@@ -72,7 +72,8 @@ class PaginationControls extends StatelessWidget {
               const Text('Showing'),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
@@ -97,7 +98,8 @@ class PaginationControls extends StatelessWidget {
                     ? () => onPageChanged(currentPage - 1)
                     : null,
                 style: IconButton.styleFrom(
-                  backgroundColor: currentPage > 1 ? Colors.blue : Colors.grey.shade200,
+                  backgroundColor:
+                      currentPage > 1 ? Colors.blue : Colors.grey.shade200,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -108,7 +110,9 @@ class PaginationControls extends StatelessWidget {
                     ? () => onPageChanged(currentPage + 1)
                     : null,
                 style: IconButton.styleFrom(
-                  backgroundColor: currentPage < totalPages ? Colors.blue : Colors.grey.shade200,
+                  backgroundColor: currentPage < totalPages
+                      ? Colors.blue
+                      : Colors.grey.shade200,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -136,16 +140,30 @@ class _DriverDashboardState extends State<DriverDashboard> {
   int _currentPage = 1;
   final int _entriesPerPage = 10;
 
-  int get _bookingsCount => _filteredBookings.where((booking) => !booking.isRead).length;
+  int get _bookingsCount =>
+      _filteredBookings.where((booking) => !booking.isRead).length;
 
+  List<Booking> get _unreadBookings {
+    return _filteredBookings.where((booking) => !booking.isRead).toList();
+  }
+
+  List<Booking> get _readBookings {
+    return _filteredBookings.where((booking) => booking.isRead).toList();
+  }
 
   List<Booking> get _paginatedBookings {
+    // Sort bookings to put unread ones first
+    final sortedBookings = List<Booking>.from(_filteredBookings)
+      ..sort((a, b) {
+        if (a.isRead == b.isRead) return 0;
+        return a.isRead ? 1 : -1; // Push read bookings to bottom
+      });
+
     final startIndex = (_currentPage - 1) * _entriesPerPage;
     final endIndex = startIndex + _entriesPerPage;
-    return _filteredBookings.sublist(
+    return sortedBookings.sublist(
       startIndex,
-      endIndex > _filteredBookings.length ? _filteredBookings.length : endIndex,
-      
+      endIndex > sortedBookings.length ? sortedBookings.length : endIndex,
     );
   }
 
@@ -159,10 +177,13 @@ class _DriverDashboardState extends State<DriverDashboard> {
   Future<void> _fetchBookings() async {
     try {
       setState(() => _isLoading = true);
-      final response = await _supabase.from('bookings').select().eq('status', 'Confirmed');
-      final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
+      final response =
+          await _supabase.from('bookings').select().eq('status', 'Confirmed');
+      final List<Map<String, dynamic>> data =
+          List<Map<String, dynamic>>.from(response);
       setState(() {
-        _filteredBookings = data.map((booking) => Booking.fromJson(booking)).toList();
+        _filteredBookings =
+            data.map((booking) => Booking.fromJson(booking)).toList();
         _isLoading = false;
       });
     } catch (error) {
@@ -183,19 +204,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
 
   Future<void> _markAsRead(String bookingId) async {
     try {
-      // Update the database
       await _supabase
           .from('bookings')
-          .update({'is_read': true})
-          .eq('id', bookingId);
+          .update({'is_read': true}).eq('id', bookingId);
 
-      // Update local state
-      setState(() {
-        final bookingIndex = _filteredBookings.indexWhere((b) => b.id == bookingId);
-        if (bookingIndex != -1) {
-          _filteredBookings[bookingIndex].isRead = true;
-        }
-      });
+      // Refresh the bookings list immediately after marking as read
+      await _fetchBookings();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -204,7 +218,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
       }
     }
   }
-
 
   Future<void> _handleLogout() async {
     setState(() => _isLoggingOut = true);
@@ -230,7 +243,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A395D),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.green.shade300,
@@ -276,7 +289,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 ),
         ],
       ),
-    body: _isLoading
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(child: Text('Error: $_error'))
@@ -290,17 +303,25 @@ class _DriverDashboardState extends State<DriverDashboard> {
                           return Card(
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
+                            color: booking.isRead
+                                ? Colors.yellow.shade100
+                                : const Color(
+                                    0xFFE7FCE0), // Updated color for unread bookings
                             child: ExpansionTile(
-                              onExpansionChanged: (isExpanded) {
+                              onExpansionChanged: (isExpanded) async {
                                 if (isExpanded && !booking.isRead) {
-                                  _markAsRead(booking.id);
+                                  await _markAsRead(booking.id);
+                                } else if (!isExpanded) {
+                                  await _fetchBookings();
                                 }
                               },
                               title: Text(
                                 '${booking.destination} Trip',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
                               ),
-                              subtitle: Text('${booking.date} - ${booking.time}'),
+                              subtitle:
+                                  Text('${booking.date} - ${booking.time}'),
                               leading: CircleAvatar(
                                 backgroundColor: const Color(0xFFE3F2FD),
                                 child: Stack(
@@ -353,7 +374,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                     ),
                                     child: Text(
                                       booking.status,
-                                      style: const TextStyle(color: Colors.white),
+                                      style:
+                                          const TextStyle(color: Colors.white),
                                     ),
                                   ),
                                 ),
@@ -367,7 +389,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
                       currentPage: _currentPage,
                       totalEntries: _filteredBookings.length,
                       entriesPerPage: _entriesPerPage,
-                      onPageChanged: (page) => setState(() => _currentPage = page),
+                      onPageChanged: (page) =>
+                          setState(() => _currentPage = page),
                     ),
                   ],
                 ),
