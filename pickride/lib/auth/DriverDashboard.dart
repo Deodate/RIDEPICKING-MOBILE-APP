@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pickride/ui/login.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Booking {
@@ -85,6 +86,7 @@ class DriverDashboard extends StatefulWidget {
 
   @override
   _DriverDashboardState createState() => _DriverDashboardState();
+  
 }
 
 class _DriverDashboardState extends State<DriverDashboard> {
@@ -93,6 +95,8 @@ class _DriverDashboardState extends State<DriverDashboard> {
   bool _isLoading = true;
   String? _error;
   int _bookingsCount = 0;
+  bool _isLoggingOut = false;
+  
 
   @override
   void initState() {
@@ -133,11 +137,36 @@ class _DriverDashboardState extends State<DriverDashboard> {
     });
   }
 
+ Future<void> _handleLogout() async {
+    setState(() => _isLoggingOut = true);
+    
+    try {
+      await _supabase.auth.signOut();
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginForm()),
+          (route) => false,
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error logging out: $error')),
+        );
+      }
+    }
+    
+    setState(() => _isLoggingOut = false);
+  }
+
+
   @override
-  Widget build(BuildContext context) {
+   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A395D),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.green.shade300,
         title: const Text('Driver Dashboard'),
         actions: [
@@ -173,6 +202,15 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 ),
             ],
           ),
+          _isLoggingOut 
+            ? const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(color: Colors.white),
+              )
+            : IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: _handleLogout,
+              ),
         ],
       ),
       body: _isLoading
@@ -205,4 +243,3 @@ class _DriverDashboardState extends State<DriverDashboard> {
     );
   }
 }
-
