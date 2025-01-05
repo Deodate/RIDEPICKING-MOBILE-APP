@@ -44,12 +44,12 @@ class PaginationControls extends StatelessWidget {
   final Function(int) onPageChanged;
 
   const PaginationControls({
-    Key? key,
+    super.key,
     required this.currentPage,
     required this.totalEntries,
     required this.entriesPerPage,
     required this.onPageChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -72,8 +72,7 @@ class PaginationControls extends StatelessWidget {
               const Text('Showing'),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
@@ -133,45 +132,29 @@ class DriverDashboard extends StatefulWidget {
 
 class _DriverDashboardState extends State<DriverDashboard> {
   final SupabaseClient _supabase = Supabase.instance.client;
-  List<Booking> _filteredBookings = [];
+  List<Booking> _allBookings = [];
+  List<Booking> _displayedBookings = [];
   bool _isLoading = true;
   String? _error;
   bool _isLoggingOut = false;
   int _currentPage = 1;
   final int _entriesPerPage = 10;
-
-  int get _bookingsCount =>
-      _filteredBookings.where((booking) => !booking.isRead).length;
-
-  List<Booking> get _unreadBookings {
-    return _filteredBookings.where((booking) => !booking.isRead).toList();
-  }
-
-  List<Booking> get _readBookings {
-    return _filteredBookings.where((booking) => booking.isRead).toList();
-  }
-
-  List<Booking> get _paginatedBookings {
-    // Sort bookings to put unread ones first
-    final sortedBookings = List<Booking>.from(_filteredBookings)
-      ..sort((a, b) {
-        if (a.isRead == b.isRead) return 0;
-        return a.isRead ? 1 : -1; // Push read bookings to bottom
-      });
-
-    final startIndex = (_currentPage - 1) * _entriesPerPage;
-    final endIndex = startIndex + _entriesPerPage;
-    return sortedBookings.sublist(
-      startIndex,
-      endIndex > sortedBookings.length ? sortedBookings.length : endIndex,
-    );
-  }
+  String _currentFilter = 'NewBooking';
 
   @override
   void initState() {
     super.initState();
     _fetchBookings();
     _setupRealtimeSubscription();
+  }
+
+  void _updateDisplayedBookings() {
+    setState(() {
+      _displayedBookings = _currentFilter == 'NewBooking'
+          ? _allBookings.where((booking) => !booking.isRead).toList()
+          : _allBookings.where((booking) => booking.isRead).toList();
+      _currentPage = 1; // Reset to first page when switching filters
+    });
   }
 
   Future<void> _fetchBookings() async {
@@ -181,9 +164,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
           await _supabase.from('bookings').select().eq('status', 'Confirmed');
       final List<Map<String, dynamic>> data =
           List<Map<String, dynamic>>.from(response);
+      
       setState(() {
-        _filteredBookings =
-            data.map((booking) => Booking.fromJson(booking)).toList();
+        _allBookings = data.map((booking) => Booking.fromJson(booking)).toList();
+        _updateDisplayedBookings();
         _isLoading = false;
       });
     } catch (error) {
@@ -207,8 +191,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
       await _supabase
           .from('bookings')
           .update({'is_read': true}).eq('id', bookingId);
-
-      // Refresh the bookings list immediately after marking as read
       await _fetchBookings();
     } catch (error) {
       if (mounted) {
@@ -218,6 +200,18 @@ class _DriverDashboardState extends State<DriverDashboard> {
       }
     }
   }
+
+  List<Booking> get _paginatedBookings {
+    final startIndex = (_currentPage - 1) * _entriesPerPage;
+    final endIndex = startIndex + _entriesPerPage;
+    return _displayedBookings.sublist(
+      startIndex,
+      endIndex > _displayedBookings.length ? _displayedBookings.length : endIndex,
+    );
+  }
+
+  int get _unreadCount =>
+      _allBookings.where((booking) => !booking.isRead).length;
 
   Future<void> _handleLogout() async {
     setState(() => _isLoggingOut = true);
@@ -240,6 +234,35 @@ class _DriverDashboardState extends State<DriverDashboard> {
     setState(() => _isLoggingOut = false);
   }
 
+  Widget _filterButton(String label, bool isSelected) {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _currentFilter = label;
+          _updateDisplayedBookings();
+        });
+      },
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.grey,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (isSelected)
+            Container(
+              height: 2,
+              width: 24,
+              color: Colors.green,
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -255,7 +278,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 icon: const Icon(Icons.notifications),
                 onPressed: () {},
               ),
-              if (_bookingsCount > 0)
+              if (_unreadCount > 0)
                 Positioned(
                   right: 0,
                   top: 0,
@@ -270,7 +293,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                       minHeight: 14,
                     ),
                     child: Text(
-                      '$_bookingsCount',
+                      '$_unreadCount',
                       style: const TextStyle(color: Colors.white, fontSize: 10),
                       textAlign: TextAlign.center,
                     ),
@@ -289,111 +312,151 @@ class _DriverDashboardState extends State<DriverDashboard> {
                 ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Text('Error: $_error'))
-              : Column(
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ride History',
+                  style: TextStyle(
+                    color: Colors.amber,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
                   children: [
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: _paginatedBookings.length,
-                        itemBuilder: (context, index) {
-                          final booking = _paginatedBookings[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            color: booking.isRead
-                                ? Colors.yellow.shade100
-                                : const Color(
-                                    0xFFE7FCE0), // Updated color for unread bookings
-                            child: ExpansionTile(
-                              onExpansionChanged: (isExpanded) async {
-                                if (isExpanded && !booking.isRead) {
-                                  await _markAsRead(booking.id);
-                                } else if (!isExpanded) {
-                                  await _fetchBookings();
-                                }
-                              },
-                              title: Text(
-                                '${booking.destination} Trip',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              subtitle:
-                                  Text('${booking.date} - ${booking.time}'),
-                              leading: CircleAvatar(
-                                backgroundColor: const Color(0xFFE3F2FD),
-                                child: Stack(
-                                  children: [
-                                    const Icon(Icons.card_travel,
-                                        color: Colors.blue),
-                                    if (!booking.isRead)
-                                      Positioned(
-                                        right: -2,
-                                        top: -2,
-                                        child: Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: const BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              children: [
-                                ListTile(
-                                  title: const Text('Name'),
-                                  subtitle: Text(booking.fullName),
-                                ),
-                                ListTile(
-                                  title: const Text('Phone'),
-                                  subtitle: Text(booking.phoneNumber),
-                                ),
-                                ListTile(
-                                  title: const Text('Location'),
-                                  subtitle: Text(booking.destination),
-                                ),
-                                ListTile(
-                                  title: const Text('Status'),
-                                  subtitle: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: booking.status == 'Confirmed'
-                                          ? Colors.green
-                                          : booking.status == 'Canceled'
-                                              ? Colors.red
-                                              : Colors.blue,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      booking.status,
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    PaginationControls(
-                      currentPage: _currentPage,
-                      totalEntries: _filteredBookings.length,
-                      entriesPerPage: _entriesPerPage,
-                      onPageChanged: (page) =>
-                          setState(() => _currentPage = page),
-                    ),
+                    _filterButton('NewBooking', _currentFilter == 'NewBooking'),
+                    const SizedBox(width: 24),
+                    _filterButton('Completed', _currentFilter == 'Completed'),
                   ],
                 ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(child: Text('Error: $_error'))
+                    : _displayedBookings.isEmpty
+                        ? Center(
+                            child: Text(
+                              _currentFilter == 'NewBooking'
+                                  ? 'No new bookings available'
+                                  : 'No completed bookings available',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _paginatedBookings.length,
+                            itemBuilder: (context, index) {
+                              final booking = _paginatedBookings[index];
+                              return Card(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                color: booking.isRead
+                                    ? Colors.yellow.shade100
+                                    : const Color(0xFFE7FCE0),
+                                child: ExpansionTile(
+                                  onExpansionChanged: (isExpanded) async {
+                                    if (isExpanded && !booking.isRead) {
+                                      await _markAsRead(booking.id);
+                                    }
+                                  },
+                                  title: Text(
+                                    '${booking.destination} Trip',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle:
+                                      Text('${booking.date} - ${booking.time}'),
+                                  leading: CircleAvatar(
+                                    backgroundColor: const Color(0xFFE3F2FD),
+                                    child: Stack(
+                                      children: [
+                                        const Icon(Icons.card_travel,
+                                            color: Colors.blue),
+                                        if (!booking.isRead)
+                                          Positioned(
+                                            right: -2,
+                                            top: -2,
+                                            child: Container(
+                                              width: 8,
+                                              height: 8,
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  children: [
+                                    ListTile(
+                                      title: const Text('Name'),
+                                      subtitle: Text(booking.fullName),
+                                    ),
+                                    ListTile(
+                                      title: const Text('Phone'),
+                                      subtitle: Text(booking.phoneNumber),
+                                    ),
+                                    ListTile(
+                                      title: const Text('Location'),
+                                      subtitle: Text(booking.destination),
+                                    ),
+                                    ListTile(
+                                      title: const Text('Status'),
+                                      subtitle: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: booking.status == 'Confirmed'
+                                              ? Colors.green
+                                              : booking.status == 'Canceled'
+                                                  ? Colors.red
+                                                  : Colors.blue,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          booking.status,
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+          ),
+          if (_displayedBookings.isNotEmpty)
+            PaginationControls(
+              currentPage: _currentPage,
+              totalEntries: _displayedBookings.length,
+              entriesPerPage: _entriesPerPage,
+              onPageChanged: (page) => setState(() => _currentPage = page),
+            ),
+        ],
+      ),
     );
   }
 }
