@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:pickride/ui/login.dart';
+import 'package:pickride/ui/onboarding_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 
@@ -281,10 +282,16 @@ class _SignUpFormState extends State<SignUpForm> {
                   onPressed: _isLoading ? null : _registerUser,
                 ),
                 const SizedBox(width: 6),
-                _buildActionButton(
+                 _buildActionButton(
                   text: 'Cancel',
                   color: Colors.red,
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const OnboardingScreen()),
+                    );
+                  },
                 ),
               ],
             ),
