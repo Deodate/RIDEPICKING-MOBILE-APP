@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pickride/auth/DriverDashboard.dart';
 import 'package:pickride/auth/admin.dart';
+import 'package:pickride/ui/onboarding_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
@@ -31,83 +32,77 @@ class _LoginFormState extends State<LoginForm> {
     return digest.toString();
   }
 
-Future<void> _handleLogin() async {
-  // Log the start of the login process
-  print('===== LOGIN PROCESS STARTED =====');
+  Future<void> _handleLogin() async {
+    // Log the start of the login process
+    print('===== LOGIN PROCESS STARTED =====');
 
-  setState(() {
-    _isLoading = true;
-    _errorMessage = '';
-  });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
-  try {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-    
-    // Input validation
-    if (email.isEmpty || password.isEmpty) {
-      throw 'Please fill in all fields';
-    }
+    try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
 
-    // Hash the password to match stored hash
-    final hashedPassword = _hashPassword(password);
+      // Input validation
+      if (email.isEmpty || password.isEmpty) {
+        throw 'Please fill in all fields';
+      }
 
-    print('Attempting to verify credentials');
-    
-    // Query Supabase to check credentials
-    final response = await Supabase.instance.client
-        .from('users')
-        .select()
-        .eq('email', email)
-        .eq('password_hash', hashedPassword)
-        .single();
+      // Hash the password to match stored hash
+      final hashedPassword = _hashPassword(password);
 
-    print('Login Successful');
-    
-    // Determine routing based on user role
-    if (response['role'] == 'Administration') {
-      // Navigate to admin page
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder: (context) => const AdminPage())
-      );
-    } else if (response['role'] == 'Driver') {
-      // Navigate to driver dashboard  git revert 
+      print('Attempting to verify credentials');
 
+      // Query Supabase to check credentials
+      final response = await Supabase.instance.client
+          .from('users')
+          .select()
+          .eq('email', email)
+          .eq('password_hash', hashedPassword)
+          .single();
 
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder: (context) => const DriverDashboard())
-      );
-    } else {
-      // Unexpected role
+      print('Login Successful');
+
+      // Determine routing based on user role
+      if (response['role'] == 'Administration') {
+        // Navigate to admin page
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => const AdminPage()));
+      } else if (response['role'] == 'Driver') {
+        // Navigate to driver dashboard  git revert
+
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => const DriverDashboard()));
+      } else {
+        // Unexpected role
+        setState(() {
+          _errorMessage = 'Invalid user role';
+        });
+        return;
+      }
+    } on PostgrestException catch (error) {
+      print('Supabase Login Error:');
+      print('Error Code: ${error.code}');
+      print('Error Message: ${error.message}');
+
       setState(() {
-        _errorMessage = 'Invalid user role';
+        _errorMessage = 'Invalid credentials. Please try again.';
       });
-      return;
+    } catch (error) {
+      print('Login Error: $error');
+
+      setState(() {
+        _errorMessage = error.toString();
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+      print('===== LOGIN PROCESS COMPLETED =====');
     }
-  
-  } on PostgrestException catch (error) {
-    print('Supabase Login Error:');
-    print('Error Code: ${error.code}');
-    print('Error Message: ${error.message}');
-    
-    setState(() {
-      _errorMessage = 'Invalid credentials. Please try again.';
-    });
-  } catch (error) {
-    print('Login Error: $error');
-    
-    setState(() {
-      _errorMessage = error.toString();
-    });
-  } finally {
-    setState(() {
-      _isLoading = false;
-    });
-    print('===== LOGIN PROCESS COMPLETED =====');
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +163,13 @@ Future<void> _handleLogin() async {
                 _buildActionButton(
                   text: 'Cancel',
                   color: Colors.red,
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const OnboardingScreen()),
+                    );
+                  },
                 ),
               ],
             ),
@@ -250,7 +251,8 @@ Future<void> _handleLogin() async {
         ),
         child: _isLoading && text == 'Login'
             ? const CircularProgressIndicator(color: Colors.white)
-            : Text(text, style: const TextStyle(fontSize: 18, color: Colors.white)),
+            : Text(text,
+                style: const TextStyle(fontSize: 18, color: Colors.white)),
       ),
     );
   }
