@@ -26,7 +26,7 @@ class OrderForm extends StatefulWidget {
 }
 
 class _OrderFormState extends State<OrderForm> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Add this line
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -217,7 +217,7 @@ class _OrderFormState extends State<OrderForm> {
         ),
       ),
       body: Form(
-        key: _formKey, // Add this line
+        key: _formKey,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Column(
@@ -309,30 +309,38 @@ class _OrderFormState extends State<OrderForm> {
         ),
         errorStyle: const TextStyle(color: Colors.red),
       ),
-      validator: label == 'Full Name'
-          ? (value) {
-              if (value == null || value.isEmpty) {
-                return 'Full name is required';
-              }
+      validator: (value) {
+        if (label == 'Full Name') {
+          if (value == null || value.isEmpty) {
+            return 'Full name is required';
+          }
 
-              // Split the name and check for two words
-              final nameParts = value.trim().split(' ');
+          // Split the name and check for two words
+          final nameParts = value.trim().split(' ');
 
-              // Check if there are exactly two words
-              if (nameParts.length != 2) {
-                return 'Please enter your first and last name';
-              }
+          // Check if there are exactly two words
+          if (nameParts.length != 2) {
+            return 'Please enter your first and last name';
+          }
 
-              // Check if both parts contain only letters
-              for (var namePart in nameParts) {
-                if (!RegExp(r'^[a-zA-Z]+$').hasMatch(namePart)) {
-                  return 'Name can only contain letters';
-                }
-              }
-
-              return null;
+          // Check if both parts contain only letters
+          for (var namePart in nameParts) {
+            if (!RegExp(r'^[a-zA-Z]+$').hasMatch(namePart)) {
+              return 'Name can only contain letters';
             }
-          : null,
+          }
+        } 
+        else if (label == 'Email Address') {
+          if (value != null && value.isNotEmpty) {
+            // Email validation regex pattern
+            final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+            if (!emailRegex.hasMatch(value)) {
+              return 'Please enter a valid email address';
+            }
+          }
+        }
+        return null;
+      },
       autovalidateMode: AutovalidateMode.onUserInteraction,
     );
   }
@@ -363,30 +371,30 @@ class _OrderFormState extends State<OrderForm> {
     );
   }
 
-Widget _buildCarTypeDropdown() {
-  return DropdownButtonFormField<String>(
-    value: _selectedCarType,
-    decoration: const InputDecoration(
-      errorStyle: TextStyle(color: Colors.red),
-    ),
-    hint: const Text(
-      'Select Car Type',
-      style: TextStyle(color: Colors.white),
-    ),
-    items: _carTypes
-        .map((carType) =>
-            DropdownMenuItem(value: carType, child: Text(carType)))
-        .toList(),
-    onChanged: (newValue) => setState(() => _selectedCarType = newValue),
-    validator: (value) {
-      if (value == null) {
-        return 'Please select a car type';
-      }
-      return null;
-    },
-    autovalidateMode: AutovalidateMode.onUserInteraction,
-  );
-}
+  Widget _buildCarTypeDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedCarType,
+      decoration: const InputDecoration(
+        errorStyle: TextStyle(color: Colors.red),
+      ),
+      hint: const Text(
+        'Select Car Type',
+        style: TextStyle(color: Colors.white),
+      ),
+      items: _carTypes
+          .map((carType) =>
+              DropdownMenuItem(value: carType, child: Text(carType)))
+          .toList(),
+      onChanged: (newValue) => setState(() => _selectedCarType = newValue),
+      validator: (value) {
+        if (value == null) {
+          return 'Please select a car type';
+        }
+        return null;
+      },
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+    );
+  }
 
   Widget _buildDropdownTimePicker() {
     List<String> times = List.generate(48, (index) {
